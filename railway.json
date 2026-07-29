@@ -2,11 +2,11 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "//": "Railway builds with NODE_ENV=production, and vite is a devDependency — a bare `npm ci` installs 1 package and `vite build` is then not found. --include=dev is what makes the build independent of NODE_ENV.",
-    "buildCommand": "npm ci --include=dev && npm run build"
+    "//": "Just the build. Nixpacks' install phase already ran npm ci, and it mounts a cache at /app/node_modules/.cache — a second npm ci here tries to wipe node_modules and dies with EBUSY on that mountpoint. vite sits in dependencies rather than devDependencies so the install phase brings it in even though Nixpacks sets NPM_CONFIG_PRODUCTION=true.",
+    "buildCommand": "npm run build"
   },
   "deploy": {
-    "//": "server.js uses only node:http, so the runtime needs nothing installed and pruning devDependencies after the build is safe.",
+    "//": "server.js uses only node:http, so nothing from node_modules is needed at runtime.",
     "startCommand": "npm start",
     "restartPolicyType": "ON_FAILURE"
   }
