@@ -2641,9 +2641,12 @@ body.final-overlay #s-final {
     );
   }
 
-  /* Top band: the grid and the model. */
-  #stage,
-  .grid-bg {
+  /* Top band: the grid and the model.
+     Scoped away from body.page — faq/inventory/built share .grid-bg but have no
+     canvas and no bands, so banding it there just stripped the drafting grid
+     off the lower half of all three pages. */
+  body:not(.page) #stage,
+  body:not(.page) .grid-bg {
     top: 0;
     height: var(--stage-h);
     bottom: auto;
@@ -2748,5 +2751,59 @@ body.final-overlay #s-final {
   .dock-r {
     top: auto;
     bottom: var(--band-bottom);
+  }
+}
+
+/* --- narrow screens, no WebGL --------------------------------------------- */
+/* createScene() throwing leaves the canvas display:none and body.no-3d set,
+   and body.no-3d had no rules at all. With the bands in place that meant 45%
+   of a phone screen held an empty grid while every word was squeezed into the
+   remainder. There is no model to make room for, so give the page back to the
+   normal flow it had before the split. */
+@media (max-width: 860px) {
+  body.no-3d:not(.page) .grid-bg {
+    height: 100%;
+    bottom: 0;
+  }
+  body.no-3d .scroll-rail { top: 0; }
+  body.no-3d.js #s-hero .copy,
+  body.no-3d.js #s-final .triptych {
+    position: static;
+    inset: auto;
+    max-height: none;
+    overflow: visible;
+    opacity: 1;
+    pointer-events: auto;
+  }
+  body.no-3d.js #s-hero .copy *,
+  body.no-3d.js #s-final .triptych > * { pointer-events: auto; }
+  body.no-3d .panel,
+  body.no-3d .panel:not(.align-center) {
+    padding-top: 6rem;
+    padding-bottom: 4rem;
+  }
+}
+
+/* --- landscape phones ----------------------------------------------------- */
+/* Two stacked dock sheets need vertical room that a landscape phone does not
+   have: at 740x400 each came out 61px tall, which is a scrollbar with a hint of
+   content. Landscape has the opposite problem to portrait — width to spare and
+   no height — so put the sheets side by side and give each the whole band.
+   Must follow the block above: it re-anchors the same two elements. */
+@media (max-width: 860px) and (max-height: 520px) {
+  :root { --stage-h: 34svh; }
+  .dock-l,
+  .dock-r {
+    top: var(--band-top);
+    bottom: var(--band-bottom);
+    max-height: none;
+  }
+  .dock-l {
+    left: 0.5rem;
+    right: calc(50% + 0.2rem);
+  }
+  .dock-r {
+    left: calc(50% + 0.2rem);
+    right: 0.5rem;
   }
 }
