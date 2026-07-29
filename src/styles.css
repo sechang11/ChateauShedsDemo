@@ -2618,3 +2618,119 @@ body.final-overlay #s-final {
   .dock-r { bottom: 5.4rem; }
   .dock-l { bottom: calc(5.4rem + var(--sheet) + 0.4rem); }
 }
+
+/* --- narrow screens: model on top, one view's words below ----------------- */
+/* The copy used to be a translucent card lying over the lower half of a
+   full-height canvas, so the bottom of the building was always behind text.
+   Split the viewport instead: the grid and the model get a band across the
+   top with nothing over them, and the words get their own band underneath.
+   The document still scrolls exactly as before — the .panel sections keep
+   their 100svh and remain the only things in flow, so they still supply the
+   scroll length that drives the rotation. Only the copy leaves the flow. */
+@media (max-width: 860px) {
+  :root {
+    --stage-h: 44svh;
+    --band-gap: 0.5rem;
+    --band-top: calc(var(--stage-h) + var(--band-gap));
+    /* Clears the backdrop bar and the view switcher stacked below it. */
+    --band-bottom: 5.4rem;
+    /* Redefined from a flat 23svh so the two dock sheets derive from the same
+       band as everything else instead of drifting out of step with it. */
+    --sheet: calc(
+      (100svh - var(--band-top) - var(--band-bottom) - var(--band-gap)) / 2
+    );
+  }
+
+  /* Top band: the grid and the model. */
+  #stage,
+  .grid-bg {
+    top: 0;
+    height: var(--stage-h);
+    bottom: auto;
+  }
+  /* The seam between the two sections is the progress rail, which #scroll-fill
+     already drives from scroll position — and scroll position IS the camera
+     azimuth here, so it reads as a rotation indicator rather than decoration. */
+  .scroll-rail {
+    top: calc(var(--stage-h) - 3px);
+    height: 3px;
+    background: rgba(22, 24, 28, 0.09);
+  }
+  .scroll-rail span { height: 3px; }
+
+  /* Bottom band: one view's words at a time.
+     body.js matches the specificity of body.lot .copy (0,2,1), which already
+     outranks the plain .copy rules further up the file. Equal specificity and
+     later in the source is what makes these apply at all. */
+  body.js .copy {
+    position: fixed;
+    left: var(--pad);
+    right: var(--pad);
+    top: var(--band-top);
+    bottom: var(--band-bottom);
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: 22;
+    /* The inactive panels' copy is still in the layer, just at opacity 0 —
+       without this it would swallow taps meant for the visible one. The
+       existing IntersectionObserver reveal decides which that is. */
+    pointer-events: none;
+  }
+  body.js .panel.in .copy { pointer-events: auto; }
+
+  /* View 3 holds TWO .copy blocks (the FAQ and the quote form). The band is the
+     triptych itself; those two stay in normal flow and scroll inside it. */
+  body.js .tri-left,
+  body.js .tri-right {
+    position: static;
+    overflow-y: visible;
+    pointer-events: auto;
+  }
+  body.js #s-final .triptych {
+    position: fixed;
+    left: var(--pad);
+    right: var(--pad);
+    top: var(--band-top);
+    bottom: var(--band-bottom);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: 22;
+    /* Fade the whole container with its panel, not just the .copy children.
+       .tri-strip is not a .copy, so it kept opacity 1 while view 3 was
+       inactive — parked outside the band's scroll offset today, but one
+       stray scroll from showing through the hero's words. */
+    opacity: 0;
+    transition: opacity 0.7s ease;
+  }
+  body.js #s-final.in .triptych { opacity: 1; }
+  body.js #s-final:not(.in) .triptych,
+  body.js #s-final:not(.in) .triptych > * { pointer-events: none; }
+  /* .triptych is pointer-events:none by default so a drag aimed at the building
+     behind it reaches the canvas. On a phone it no longer sits over the canvas
+     — the model has its own band above — so that trade is off, and the rule
+     would instead make the band unscrollable and the quote form unreachable.
+     Hand touches back to it while it is the active view. */
+  body.js #s-final.in .triptych,
+  body.js #s-final.in .triptych > * { pointer-events: auto; }
+
+  /* The panels are pure scroll runway now; their padding only ever existed to
+     hold the copy clear of the building. */
+  .panel,
+  .panel:not(.align-center) {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  /* The docks are the bottom band for view 2 — same geometry, split in two. */
+  .dock-l {
+    top: var(--band-top);
+    bottom: auto;
+  }
+  .dock-r {
+    top: auto;
+    bottom: var(--band-bottom);
+  }
+}

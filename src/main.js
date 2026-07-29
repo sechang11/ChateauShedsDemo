@@ -1069,7 +1069,11 @@ function frame(now) {
     const outDist = (current.dist * f * (narrow ? 1.16 : 1)) / zoom;
     lastCamDist = outDist; // ambient scales its flight radius off this
     const inDist = Math.max(2.6, Math.min(working.width, working.depth) * 0.3);
-    const outY = current.targetY + (working.wallHeight - 8) * 0.4 + (narrow ? 1.4 : 0);
+    // The narrow-screen raise existed to lift the building clear of a copy card
+    // that lay over the lower half of the canvas. The canvas is now a band with
+    // nothing on top of it, so the building wants centring in that band, not
+    // pushing up out of it.
+    const outY = current.targetY + (working.wallHeight - 8) * 0.4;
 
     stage.setCamera({
       az: rad(current.az + drift),
