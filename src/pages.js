@@ -100,6 +100,9 @@ function renderInventory() {
   LOTS.forEach((lot, li) => {
     const stock = all.filter((_, i) => i % LOTS.length === li).slice(0, 9);
     const sec = el('section', 'lot-block');
+    // The header's lot links point at /inventory.html#granby and #westfield.
+    // Nothing carried those ids, so both landed at the top of the page.
+    sec.id = lot.id;
     sec.appendChild(
       el(
         'div',
@@ -109,6 +112,26 @@ function renderInventory() {
          <span class="cfg-label">${stock.length} on the lot</span>`
       )
     );
+
+    // A map per lot. The keyless /maps/embed form takes the address as a query
+    // rather than a place id, so it needs no API key and no billing account —
+    // worth keeping in mind before swapping it for the Embed API, which needs
+    // both. Lazy so two iframes don't compete with the photography for the
+    // first paint.
+    const map = el('div', 'lot-map');
+    const q = encodeURIComponent(lot.address);
+    map.innerHTML = `
+      <iframe
+        src="https://www.google.com/maps/embed?origin=mfe&pb=!1m2!2m1!1s${q}"
+        title="Map showing the ${lot.name} lot at ${lot.address}"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        allowfullscreen></iframe>
+      <div class="lot-map-foot">
+        <span>${lot.address}</span>
+        <a class="ghost" href="${lot.map}" target="_blank" rel="noopener">Directions</a>
+      </div>`;
+    sec.appendChild(map);
 
     const grid = el('div', 'inv-grid');
     stock.forEach((m, i) => {
