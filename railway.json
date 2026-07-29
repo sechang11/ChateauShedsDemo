@@ -1,5 +1,13 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
-  "build": { "builder": "NIXPACKS", "buildCommand": "npm ci && npm run build" },
-  "deploy": { "startCommand": "npm start", "restartPolicyType": "ON_FAILURE" }
+  "build": {
+    "builder": "NIXPACKS",
+    "//": "Railway builds with NODE_ENV=production, and vite is a devDependency — a bare `npm ci` installs 1 package and `vite build` is then not found. --include=dev is what makes the build independent of NODE_ENV.",
+    "buildCommand": "npm ci --include=dev && npm run build"
+  },
+  "deploy": {
+    "//": "server.js uses only node:http, so the runtime needs nothing installed and pruning devDependencies after the build is safe.",
+    "startCommand": "npm start",
+    "restartPolicyType": "ON_FAILURE"
+  }
 }
