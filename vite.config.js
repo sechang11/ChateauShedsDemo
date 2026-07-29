@@ -55,6 +55,16 @@ function contentSink() {
 
 export default defineConfig({
   plugins: [shotSink(), contentSink()],
+  // `npm start` on Railway runs `vite preview`, and since 5.4.12 that rejects
+  // any Host header it was not told about — deployed without this, every
+  // request to the .up.railway.app domain gets "Blocked request. This host is
+  // not allowed." instead of the site. A leading dot matches subdomains.
+  // PUBLIC_HOST covers a custom domain later without another code change.
+  preview: {
+    host: true,
+    port: Number(process.env.PORT) || 4173,
+    allowedHosts: ['.railway.app', ...(process.env.PUBLIC_HOST ? [process.env.PUBLIC_HOST] : [])],
+  },
   build: {
     rollupOptions: {
       // Multi-page: each standalone page is its own entry so it ships as real

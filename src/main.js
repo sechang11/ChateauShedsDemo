@@ -935,6 +935,12 @@ FAQ.forEach(({ q, a }) => {
 const form = document.getElementById('quote-form');
 const qError = document.getElementById('q-error');
 
+// Where a quote lands is a deploy-time decision, not a code one. Hosted
+// publicly and pointed at the real inbox, this demo puts live enquiries in
+// front of a business that did not send anyone here. Set VITE_QUOTE_EMAIL at
+// build time to route them somewhere else; the default keeps local behaviour.
+const QUOTE_TO = import.meta.env.VITE_QUOTE_EMAIL || 'info@ChateauSheds.com';
+
 form.addEventListener('submit', (e) => {
   e.preventDefault();
   const data = new FormData(form);
@@ -975,7 +981,7 @@ form.addEventListener('submit', (e) => {
 
   // No backend on a sample site, so hand off to the visitor's mail client --
   // they see and send it themselves. Swap for a POST when there's an endpoint.
-  location.href = `mailto:info@ChateauSheds.com?subject=${encodeURIComponent(
+  location.href = `mailto:${QUOTE_TO}?subject=${encodeURIComponent(
     `Quote request — ${active.tab}`
   )}&body=${encodeURIComponent(body)}`;
 });
