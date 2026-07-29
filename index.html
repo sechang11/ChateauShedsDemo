@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chateau Sheds — Outdoor structures built for New England</title>
+    <meta
+      name="description"
+      content="Custom sheds, garages, saunas, animal structures and greenhouses, engineered for Massachusetts snow loads. Granby and Westfield, MA."
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div class="grid-bg" aria-hidden="true"></div>
+    <canvas id="stage" aria-hidden="true"></canvas>
+    <div class="dim-layer" id="dim-layer" aria-hidden="true"></div>
+    <div class="scroll-rail" aria-hidden="true"><span id="scroll-fill"></span></div>
+
+    <nav class="lots-link" aria-label="Our lots">
+      <a href="/inventory.html#granby">Granby</a>
+      <a href="/inventory.html#westfield">Westfield</a>
+    </nav>
+
+    <nav class="rotations" id="rotations" aria-label="Views">
+      <button type="button" data-rot="customize" aria-pressed="true">Building</button>
+      <button type="button" data-rot="inventory" aria-pressed="false">Customize</button>
+      <button type="button" data-rot="final" aria-pressed="false">Quote &amp; FAQ</button>
+    </nav>
+
+    <header class="topbar">
+      <div class="bar-main">
+        <a class="wordmark" href="#s-hero">
+          <span class="mark" aria-hidden="true"></span>
+          <span class="wordmark-text">Chateau<em>Sheds</em></span>
+        </a>
+        <nav class="cats" id="cats" aria-label="Product categories"></nav>
+        <button class="ghost ghost-sm" type="button" id="open-catalogue">All models</button>
+      </div>
+      <nav class="tabs" id="tabs" role="tablist" aria-label="Models"></nav>
+    </header>
+
+    <div class="viewbar" id="viewbar">
+      <div class="viewgroup" role="group" aria-label="Backdrop" data-group="env"></div>
+      <div class="viewgroup" role="group" aria-label="Framing">
+        <button type="button" data-frame="on" aria-pressed="false">Framing</button>
+      </div>
+      <div class="viewgroup" role="group" aria-label="Motion" id="motion-group" hidden>
+        <button type="button" data-motion="on" aria-pressed="false">Motion off</button>
+      </div>
+      <span class="season-badge" id="season-badge" hidden>Spring</span>
+    </div>
+
+    <div class="navpad" id="navpad">
+      <div class="viewgroup" role="group" aria-label="Turn the building">
+        <button type="button" data-spin="-1" aria-label="Turn left" title="Turn left">↺</button>
+        <button type="button" data-spin="1" aria-label="Turn right" title="Turn right">↻</button>
+      </div>
+      <div class="viewgroup" role="group" aria-label="Zoom">
+        <button type="button" data-zoom="-1" aria-label="Zoom out" title="Zoom out">−</button>
+        <button type="button" data-zoom="1" aria-label="Zoom in" title="Zoom in">+</button>
+      </div>
+    </div>
+
+    <p class="drag-hint" id="drag-hint" aria-hidden="true">Drag to turn · Scroll to zoom</p>
+
+    <main>
+      <!-- VIEW 1 — the building. Three ways out. -->
+      <section id="s-hero" class="panel align-left">
+        <div class="copy">
+          <p class="eyelid"><span data-bind="categoryLabel">Sheds</span></p>
+          <h1><span data-bind="tab">The Chateau</span></h1>
+          <p class="tagline" data-bind="tagline">The flagship</p>
+          <p class="lede" data-bind="blurb"></p>
+          <dl class="plate">
+            <div><dt>Footprint</dt><dd data-bind="size"></dd></div>
+            <div><dt>Roof</dt><dd data-bind="roofLabel"></dd></div>
+            <div><dt>Starting</dt><dd><span data-bind="price"></span>*</dd></div>
+          </dl>
+          <ul class="spec-list spec-tight">
+            <li><span>Floor area</span><b data-bind="heroSq">240 sq ft</b></li>
+            <li><span>Wall height</span><b data-bind="heroWall">8'</b></li>
+            <li><span>Peak height</span><b data-bind="heroPeak">11.9'</b></li>
+            <li><span>Doors</span><b data-bind="heroDoor">Double barn</b></li>
+            <li><span>Windows</span><b data-bind="heroWin">2</b></li>
+            <li><span>Porch</span><b data-bind="heroPorch">5'</b></li>
+          </ul>
+          <div class="actions">
+            <button class="cta" type="button" data-goto="s-build">Customize</button>
+            <button class="ghost" type="button" id="hero-browse">All models</button>
+            <button class="ghost" type="button" data-goto="s-final">Get a quote</button>
+          </div>
+          <p class="fine">
+            * Demo configurator. Sample figures — not a quote, and not confirmed
+            orderable. What we actually build runs wider than what fits here.
+          </p>
+        </div>
+        <p class="scroll-hint">Drag the building to walk around it</p>
+      </section>
+
+      <!-- VIEW 2 — customize. Measurements here, palette in the fixed dock. -->
+      <!-- Scroll anchor only: this view is entirely the two docks. -->
+      <section id="s-build" class="panel align-left" aria-label="Customize"></section>
+
+      <!-- VIEW 3 — FAQ left, building centre, quote right, built-work below. -->
+      <section id="s-final" class="panel align-full">
+        <div class="triptych">
+          <div class="copy tri-left">
+            <p class="eyelid">Questions <a class="col-link" href="/faq.html">Full FAQ page &rarr;</a></p>
+            <h2>Before delivery.</h2>
+            <div class="faq" id="faq"></div>
+          </div>
+
+          <div class="tri-mid">
+          </div>
+
+          <div class="copy tri-right">
+            <p class="eyelid">Get a quote</p>
+            <h2>Send us this build.</h2>
+            <form class="quote" id="quote-form" novalidate>
+              <div class="q-build" id="q-build" aria-live="polite"></div>
+              <div class="q-row">
+                <label><span>Name</span><input name="name" type="text" autocomplete="name" required /></label>
+                <label><span>Town</span><input name="town" type="text" autocomplete="address-level2" required /></label>
+              </div>
+              <div class="q-row">
+                <label><span>Email</span><input name="email" type="email" autocomplete="email" required /></label>
+                <label><span>Phone</span><input name="phone" type="tel" autocomplete="tel" /></label>
+              </div>
+              <p class="q-error" id="q-error" role="alert" hidden></p>
+              <p class="fine">
+                A demo build, not an order. The real range is wider, and
+                we&#39;ll confirm every detail before anything is built.
+              </p>
+              <div class="actions">
+                <button class="cta" type="submit">Send this build</button>
+                <a class="ghost" href="tel:+14134786833">413-478-6833</a>
+              </div>
+            </form>
+            <div class="lots">
+              <div class="lot">
+                <h3>Granby</h3>
+                <a href="https://maps.app.goo.gl/mAfYaogjCRnjRv6K7">185 W State St</a>
+              </div>
+              <div class="lot">
+                <h3>Westfield</h3>
+                <a href="https://maps.app.goo.gl/xPtS2cNHVwMRY5ty5">202 Union St</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="tri-strip">
+            <span class="cfg-label">
+              What we've already built
+              <a class="col-link" href="/built.html">See all we have built &rarr;</a>
+              <button class="ghost" type="button" id="open-plates">Quick look</button>
+              <span class="fine" id="gallery-note"></span>
+              <span class="fine" data-bind="galleryCount"></span>
+            </span>
+            <div class="plates plates-row" id="media-photos"></div>
+            <div class="media-reels" id="media-reels"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <span>Chateau Sheds — Granby &amp; Westfield, MA</span>
+      <span>100% USA owned and operated</span>
+      <span>© 2026</span>
+    </footer>
+
+    <aside class="dock dock-l" id="dock-left" hidden aria-label="Size">
+      <div class="dock-head">
+        <div>
+          <p class="eyelid">Size</p>
+          <b>Measured, not estimated.</b>
+          <p class="dock-note">
+            Widths run 8&#39; to 24&#39;, lengths to 32&#39;. Change anything and the
+            model changes with it.
+          </p>
+        </div>
+      </div>
+      <div class="dims dims-dock">
+        <div class="dim"><b data-bind="dimW">12&#39;</b><span>W</span></div>
+        <div class="dim"><b data-bind="dimD">20&#39;</b><span>D</span></div>
+        <div class="dim"><b data-bind="dimH">8&#39;</b><span>Wall</span></div>
+        <div class="dim"><b data-bind="dimSq">240</b><span>Sq ft</span></div>
+      </div>
+      <div class="dock-body" id="dock-left-body"><div class="cfg" id="cfg"></div></div>
+      <dl class="plate plate-4 dock-plate">
+        <div><dt>Footprint</dt><dd data-bind="cfgSize">12&#39; × 20&#39;</dd></div>
+        <div><dt>Peak</dt><dd data-bind="cfgPeak">11.9&#39;</dd></div>
+        <div><dt>Roof</dt><dd data-bind="cfgRoof">Gable</dd></div>
+      </dl>
+      <p class="fine">
+        Framed at 16&quot; on centre for Massachusetts ground snow load — hit
+        <b>Framing</b> to strip the skin off.
+      </p>
+    </aside>
+
+    <aside class="dock dock-r" id="dock" hidden aria-label="Colour">
+      <div class="dock-head">
+        <div><p class="eyelid">Colour</p><b data-bind="tab">The Chateau</b></div>
+        <button class="cat-close" type="button" id="dock-done">Save</button>
+      </div>
+      <div class="dock-body" id="dock-body"></div>
+      <div class="actions">
+        <button class="ghost" type="button" id="cfg-share">Copy link</button>
+        <button class="ghost" type="button" id="cfg-reset">Reset</button>
+      </div>
+      <p class="fine" id="cfg-share-note" role="status"></p>
+      <p class="fine">
+        A sample of the range. We build more sidings, trims, rooflines and
+        add-ons than fit in this demo — ask and we&#39;ll walk you through the rest.
+      </p>
+    </aside>
+
+    <div class="cat-overlay" id="catalogue"></div>
+    <div class="cat-overlay" id="plates"></div>
+
+    <noscript><p style="padding: 2rem">Enable JavaScript to view the 3D model.</p></noscript>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

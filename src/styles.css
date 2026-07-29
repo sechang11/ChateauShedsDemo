@@ -1,0 +1,2588 @@
+/* Chateau Sheds — white paper, a drafting grid, and one building on it. */
+
+:root {
+  --ink: #16181c;
+  --ink-2: #4b5058;
+  --ink-3: #878d96;
+  --paper: #ffffff;
+  --line: rgba(22, 24, 28, 0.062);
+  --line-major: rgba(22, 24, 28, 0.1);
+  --accent: #8a5a2b;
+  --rule: rgba(22, 24, 28, 0.12);
+
+  --cell: 30px;
+  --major: 150px;
+
+  --display: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua',
+    Georgia, serif;
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+
+  --pad: clamp(1.25rem, 4vw, 4rem);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* --- the grid ------------------------------------------------------------ */
+/* Flat drafting grid on the page. The 3D grid in the canvas fogs out to white
+   and meets this one, so the building reads as sitting on the same surface. */
+.grid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(to right, var(--line-major) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line-major) 1px, transparent 1px),
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size:
+    var(--major) var(--major),
+    var(--major) var(--major),
+    var(--cell) var(--cell),
+    var(--cell) var(--cell);
+}
+
+/* Fade the flat grid out near the horizon so the two grids blend. */
+.grid-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    120% 85% at 50% 62%,
+    rgba(255, 255, 255, 0) 38%,
+    rgba(255, 255, 255, 0.86) 78%,
+    #fff 100%
+  );
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  pointer-events: none;
+  display: block;
+}
+
+/* --- scroll rail --------------------------------------------------------- */
+.scroll-rail {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 40;
+  background: transparent;
+}
+.scroll-rail span {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: var(--ink);
+  transition: width 0.08s linear;
+}
+
+/* --- topbar -------------------------------------------------------------- */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.9rem var(--pad) 0.75rem;
+  backdrop-filter: blur(9px);
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.94),
+    rgba(255, 255, 255, 0.72)
+  );
+  border-bottom: 1px solid var(--rule);
+}
+
+.bar-main {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.cats {
+  display: flex;
+  gap: 0.15rem;
+  margin: 0 auto;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.cat {
+  appearance: none;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.74rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 1.5px solid transparent;
+  transition: color 0.18s, border-color 0.18s;
+}
+.cat:hover {
+  color: var(--ink);
+}
+.cat[aria-pressed='true'] {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  color: var(--ink);
+  flex: 0 0 auto;
+}
+.wordmark .mark {
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid var(--ink);
+  transform: rotate(45deg);
+  border-radius: 1px;
+}
+.wordmark-text {
+  font-family: var(--display);
+  font-size: 1.1rem;
+  letter-spacing: 0.015em;
+}
+.wordmark-text em {
+  font-style: normal;
+  color: var(--ink-3);
+  margin-left: 0.35ch;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  border-top: 1px solid var(--rule);
+  padding-top: 0.5rem;
+}
+.tab {
+  appearance: none;
+  border: 1px solid transparent;
+  background: none;
+  font: inherit;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+  padding: 0.42rem 0.85rem;
+  border-radius: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.18s, background 0.18s, border-color 0.18s;
+}
+.tab:hover {
+  color: var(--ink);
+  background: rgba(22, 24, 28, 0.04);
+}
+.tab[aria-selected='true'] {
+  color: var(--ink);
+  border-color: var(--rule);
+  background: #fff;
+  font-weight: 600;
+}
+.tab .swatch {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 0.5ch;
+  vertical-align: 1px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+}
+
+.cta {
+  display: inline-block;
+  background: var(--ink);
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.86rem;
+  letter-spacing: 0.01em;
+  padding: 0.7rem 1.3rem;
+  border-radius: 2px;
+  transition: background 0.18s, transform 0.18s;
+}
+.cta:hover {
+  background: var(--accent);
+  transform: translateY(-1px);
+}
+.cta-sm {
+  padding: 0.5rem 0.95rem;
+  font-size: 0.8rem;
+  flex: 0 0 auto;
+}
+
+.ghost {
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.86rem;
+  padding: 0.7rem 0.2rem;
+  border-bottom: 1px solid var(--rule);
+  transition: border-color 0.18s, color 0.18s;
+}
+.ghost:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* --- panels -------------------------------------------------------------- */
+main {
+  position: relative;
+  z-index: 20;
+  /* main spans the whole document above the canvas, so leaving it hit-testable
+     swallowed every drag before it could reach the model. Interactive children
+     opt back in below. */
+  pointer-events: none;
+}
+
+.panel {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 7rem var(--pad) 4rem;
+  pointer-events: none;
+}
+.panel > * {
+  pointer-events: auto;
+}
+
+.align-left {
+  justify-content: flex-start;
+}
+.align-right {
+  justify-content: flex-end;
+}
+.align-center {
+  justify-content: center;
+  text-align: center;
+}
+
+.copy {
+  max-width: 27rem;
+  position: relative;
+  padding: 1.6rem 1.8rem;
+  border-radius: 3px;
+  /* A soft scrim so text stays legible when the building drifts behind it. */
+  background: radial-gradient(
+    100% 100% at 50% 50%,
+    rgba(255, 255, 255, 0.96) 55%,
+    rgba(255, 255, 255, 0.78) 100%
+  );
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+/* The reveal is opt-in from JS. Hiding the copy in plain CSS would leave the
+   whole page blank if the script ever fails to run. */
+body.js .copy {
+  opacity: 0;
+  transform: translateY(18px);
+}
+body.js .panel.in .copy {
+  opacity: 1;
+  transform: none;
+}
+.align-center .copy {
+  max-width: 34rem;
+}
+
+.eyelid {
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0 0 1.1rem;
+}
+
+h1 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 6vw, 4.1rem);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+h2 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0 0 1rem;
+}
+
+.tagline {
+  font-family: var(--display);
+  font-style: italic;
+  color: var(--accent);
+  font-size: 1.15rem;
+  margin: 0.55rem 0 1.1rem;
+}
+
+.copy p {
+  color: var(--ink-2);
+  line-height: 1.62;
+  font-size: 0.97rem;
+  margin: 0 0 1.1rem;
+}
+.lede {
+  font-size: 1.02rem !important;
+}
+.fine {
+  font-size: 0.8rem !important;
+  color: var(--ink-3) !important;
+  line-height: 1.55;
+}
+
+/* spec plate */
+.plate {
+  display: flex;
+  gap: 0;
+  margin: 1.4rem 0 1.7rem;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.plate > div {
+  flex: 1;
+  padding: 0.8rem 0.9rem 0.8rem 0;
+}
+.plate > div + div {
+  border-left: 1px solid var(--rule);
+  padding-left: 0.9rem;
+}
+.plate dt {
+  font-size: 0.66rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 0.35rem;
+}
+.plate dd {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  flex-wrap: wrap;
+}
+.align-center .actions {
+  justify-content: center;
+}
+
+.spec-list {
+  list-style: none;
+  margin: 1.5rem 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+.spec-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.72rem 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.88rem;
+  color: var(--ink-2);
+}
+.spec-list b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.dims {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  margin: 1.5rem 0;
+}
+.dim {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.95rem 0.6rem;
+  text-align: center;
+}
+.dim b {
+  display: block;
+  font-family: var(--display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1;
+  transition: color 0.3s;
+}
+.dim span {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.swatches {
+  display: flex;
+  gap: 0.6rem;
+  margin: 1.4rem 0;
+}
+.swatches i {
+  width: 46px;
+  height: 46px;
+  border-radius: 2px;
+  border: 1px solid var(--rule);
+  transition: background 0.45s ease;
+}
+
+/* --- dimension labels ---------------------------------------------------- */
+/* Projected from 3D each frame; kept in the DOM so the numbers stay crisp. */
+.dim-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  overflow: hidden;
+}
+.dim-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.45rem;
+  border-radius: 2px;
+  white-space: nowrap;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* --- configurator -------------------------------------------------------- */
+.copy-wide {
+  max-width: 34rem;
+}
+
+.cfg {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem 1.4rem;
+  margin: 1.4rem 0;
+  padding: 1.1rem 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.cfg-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.cfg-label {
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.cfg-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.cfg-row output {
+  font-size: 0.82rem;
+  font-weight: 600;
+  min-width: 3ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.cfg input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 2px;
+  background: var(--rule);
+  border-radius: 2px;
+  cursor: pointer;
+}
+.cfg input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--rule);
+}
+.cfg input[type='range']::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 2px solid #fff;
+}
+.cfg input[type='range']:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.cfg-choices {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+.cfg-choice {
+  appearance: none;
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 0.34rem 0.6rem;
+  border: 1px solid var(--rule);
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 2px;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.cfg-choice:hover {
+  color: var(--ink);
+  border-color: var(--ink-3);
+}
+.cfg-choice[aria-pressed='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+
+.cfg-swatches {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+.cfg-swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 2px;
+  border: 1px solid var(--rule);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.cfg-swatch:hover {
+  transform: translateY(-2px);
+}
+.cfg-swatch[aria-pressed='true'] {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--ink);
+}
+
+button.ghost {
+  appearance: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.cue {
+  font-size: 0.78rem !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent) !important;
+}
+
+/* --- lots ---------------------------------------------------------------- */
+.lots {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  margin: 1.5rem 0;
+  text-align: left;
+}
+.lot {
+  background: rgba(255, 255, 255, 0.92);
+  padding: 1rem;
+}
+.lot h3 {
+  margin: 0 0 0.45rem;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.15rem;
+}
+.lot a {
+  color: var(--ink-2);
+  text-decoration: none;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  border-bottom: 1px solid transparent;
+}
+.lot a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* --- view toggles -------------------------------------------------------- */
+.viewbar {
+  position: fixed;
+  right: var(--pad);
+  bottom: 1.4rem;
+  z-index: 28;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.viewgroup {
+  display: flex;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+}
+.viewgroup button {
+  appearance: none;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.74rem;
+  letter-spacing: 0.03em;
+  padding: 0.45rem 0.75rem;
+  color: var(--ink-2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.viewgroup button:hover {
+  color: var(--ink);
+}
+.viewgroup button[aria-pressed='true'] {
+  background: var(--ink);
+  color: #fff;
+}
+
+.viewgroup button[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.viewgroup button em {
+  font-style: normal;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-left: 0.4ch;
+}
+
+.season-badge {
+  align-self: center;
+  padding: 0.42rem 0.8rem;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+/* No-wheel fallback controls. */
+.navpad {
+  position: fixed;
+  right: var(--pad);
+  bottom: 4.4rem;
+  z-index: 28;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+.navpad button {
+  appearance: none;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  width: 2.2rem;
+  height: 2.1rem;
+  color: var(--ink-2);
+  cursor: pointer;
+  touch-action: none;
+  transition: background 0.15s, color 0.15s;
+}
+.navpad button:hover {
+  background: rgba(22, 24, 28, 0.06);
+  color: var(--ink);
+}
+.navpad button:active {
+  background: var(--ink);
+  color: #fff;
+}
+.navpad button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.drag-hint {
+  position: fixed;
+  left: var(--pad);
+  bottom: 1.55rem;
+  z-index: 27;
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+
+/* The canvas takes pointer events so the model can be dragged. Copy panels sit
+   above it and keep their own, so nothing is stolen from them.
+   pan-y lets a vertical touch scroll the page while horizontal spins. */
+#stage {
+  pointer-events: auto;
+  touch-action: pan-y;
+  cursor: grab;
+}
+#stage.grabbing {
+  cursor: grabbing;
+}
+
+/* On the lot, the flat page grid becomes sky. The 3D fog is set to --horizon
+   so the two meet without a seam. */
+body.lot .grid-bg {
+  background-image: var(--sky);
+  background-color: var(--horizon, #d9e3e2);
+}
+body.lot .grid-bg::after {
+  background: none;
+}
+body.lot .copy {
+  background: rgba(255, 255, 255, 0.93);
+  border: 1px solid rgba(22, 24, 28, 0.09);
+}
+
+/* --- media --------------------------------------------------------------- */
+.media-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(140px, 1fr);
+  gap: 0.5rem;
+  margin: 1.3rem 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding-bottom: 0.4rem;
+}
+.media-split {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 1.2rem;
+  margin: 1.3rem 0;
+}
+.media-reels {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+.media-video .slot {
+  margin-top: 0.4rem;
+}
+.media-social a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* A placeholder that reads as a placeholder — no fake imagery, no fake
+   engagement numbers. */
+.slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  text-align: center;
+  padding: 0.7rem;
+  border: 1px dashed var(--rule);
+  border-radius: 2px;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(22, 24, 28, 0.022) 0 7px,
+    transparent 7px 14px
+  );
+  color: var(--ink-3);
+}
+.slot span {
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.slot small {
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
+.slot-photo {
+  aspect-ratio: 4 / 3;
+}
+.slot-video {
+  aspect-ratio: 16 / 9;
+}
+.slot-reel {
+  aspect-ratio: 9 / 16;
+}
+a.slot-reel {
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+a.slot-reel:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+/* The archive is the trust layer — real buildings on real properties — so it
+   breaks out of the copy column and takes the full width. */
+.align-full {
+  justify-content: stretch;
+}
+.copy-full {
+  max-width: min(78rem, 100%);
+  width: 100%;
+  margin: 0 auto;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.94),
+    rgba(255, 255, 255, 0.86)
+  );
+}
+.copy-full > p,
+.copy-full > h2,
+.copy-full > .eyelid {
+  max-width: 34rem;
+}
+
+/* Bigger tiles, and the first one takes a 2×2 block so the grid has a subject
+   instead of reading as twelve equal thumbnails. */
+.plates-feature {
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+}
+.plates-feature .plate:first-child {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+.plates-feature .plate:first-child .plate-frame {
+  aspect-ratio: 1 / 1;
+}
+
+/* Walk-throughs read as video, not as an empty slot. */
+.media-reels {
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.6rem;
+  margin-top: 1.4rem;
+}
+a.slot-reel {
+  aspect-ratio: 16 / 10;
+  border-style: solid;
+  border-color: var(--rule);
+  background: rgba(255, 255, 255, 0.7);
+  gap: 0.5rem;
+}
+a.slot-reel::before {
+  content: '▶';
+  font-size: 1.15rem;
+  color: var(--accent);
+  line-height: 1;
+}
+a.slot-reel:hover {
+  background: #fff;
+  border-color: var(--accent);
+}
+
+/* --- plates ---------------------------------------------------------------
+   Photographs are the only full-colour, real-world thing on a white line-drawn
+   page. Treated as plates laid on the drafting sheet: snapped to the module,
+   hairline-ruled, numbered and captioned in the same small caps as the specs. */
+.plates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 1px;
+  margin: 1.3rem 0;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+}
+.plates-all {
+  margin-bottom: 1rem;
+}
+.plate {
+  margin: 0;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 0.5rem;
+  cursor: zoom-in;
+  transition: background 0.18s;
+}
+.plate:hover {
+  background: #fff;
+}
+.plate-frame {
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: rgba(22, 24, 28, 0.05);
+}
+.plate img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  /* Slightly desaturated at rest so a wall of photographs doesn't shout over
+     the line work; full colour on hover. */
+  filter: saturate(0.86) contrast(1.02);
+  transition: filter 0.25s, transform 0.4s ease;
+}
+.plate:hover img {
+  filter: none;
+  transform: scale(1.03);
+}
+.plate figcaption {
+  display: flex;
+  gap: 0.5ch;
+  margin-top: 0.4rem;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.plate figcaption i {
+  font-style: normal;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Real photographs from the client's own galleries. */
+.shot {
+  margin: 0;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(22, 24, 28, 0.04);
+}
+.shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
+}
+.shot:hover img {
+  transform: scale(1.04);
+}
+.shot {
+  position: relative;
+  cursor: zoom-in;
+}
+.shot-zoom {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.shot:hover .shot-zoom,
+.shot:focus-within .shot-zoom {
+  opacity: 1;
+}
+
+/* --- named colorways ----------------------------------------------------- */
+.cfg-ways {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+.cfg-way {
+  appearance: none;
+  font: inherit;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.32rem 0.45rem;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.cfg-way:hover {
+  border-color: var(--ink-3);
+}
+.cfg-way[aria-pressed='true'] {
+  border-color: var(--ink);
+  background: #fff;
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.way-swatches {
+  display: flex;
+  flex: 0 0 auto;
+}
+.way-swatches i {
+  width: 11px;
+  height: 18px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+}
+.way-swatches i + i {
+  border-left: 0;
+}
+.way-name {
+  font-size: 0.7rem;
+  color: var(--ink-2);
+  line-height: 1.2;
+}
+.cfg-way[aria-pressed='true'] .way-name {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* --- lightbox ------------------------------------------------------------ */
+.lb {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: clamp(1rem, 4vw, 3rem);
+  background: rgba(16, 17, 20, 0.93);
+  backdrop-filter: blur(6px);
+}
+.lb.open {
+  display: flex;
+}
+.lb-stage {
+  margin: 0;
+  max-width: min(1400px, 100%);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  align-items: center;
+}
+.lb-stage img {
+  max-width: 100%;
+  max-height: calc(100vh - 9rem);
+  object-fit: contain;
+  border-radius: 2px;
+  background: #1c1e22;
+  transition: opacity 0.2s;
+}
+.lb.loading .lb-stage img {
+  opacity: 0.25;
+}
+.lb-stage figcaption {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+}
+.lb-count {
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.45);
+}
+.lb-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  appearance: none;
+  font: inherit;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  padding: 0.5rem 0.9rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 2px;
+  cursor: pointer;
+}
+.lb-close:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+.lb-nav {
+  appearance: none;
+  flex: 0 0 auto;
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.7rem;
+  line-height: 1;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.lb-nav:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+/* --- faq ----------------------------------------------------------------- */
+.faq {
+  margin: 0.5rem 0 1rem;
+  border-top: 1px solid var(--rule);
+}
+.faq-item {
+  border-bottom: 1px solid var(--rule);
+}
+.faq-item summary {
+  cursor: pointer;
+  padding: 0.7rem 0;
+  font-size: 0.88rem;
+  color: var(--ink);
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+}
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+.faq-item summary::after {
+  content: '+';
+  color: var(--ink-3);
+  font-size: 1.05rem;
+  line-height: 1;
+}
+.faq-item[open] summary::after {
+  content: '–';
+}
+.faq-item summary:hover {
+  color: var(--accent);
+}
+.faq-item p {
+  margin: 0 0 0.9rem;
+  font-size: 0.84rem !important;
+  line-height: 1.6;
+  color: var(--ink-2);
+  padding-right: 1.5rem;
+}
+
+/* --- quote form ---------------------------------------------------------- */
+.quote {
+  margin: 1.4rem 0 1rem;
+}
+.q-build {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.1rem;
+  border-left: 2px solid var(--accent);
+  background: rgba(22, 24, 28, 0.028);
+  font-size: 0.8rem;
+  color: var(--ink-2);
+}
+.q-build .cfg-label {
+  margin-bottom: 0.35rem;
+}
+.q-row {
+  display: grid;
+  /* Two up when the column can carry two, one up when it cannot. A hard 1fr 1fr
+     held the pairing at every width, and in the narrow side column of the
+     triptych that meant 86px name and town fields. Driven by content rather
+     than a breakpoint, so it also survives whatever the column does next. */
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+.quote label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.quote label > span {
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.q-full {
+  margin-bottom: 0.9rem;
+}
+.quote input,
+.quote textarea {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ink);
+  width: 100%;
+  resize: vertical;
+}
+.quote input:focus-visible,
+.quote textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+.q-error {
+  color: #a8322a;
+  font-size: 0.82rem;
+  margin: 0 0 0.8rem;
+}
+
+/* --- catalogue overlay --------------------------------------------------- */
+/* --- the 3D matrix catalogue --------------------------------------------- */
+.mx3-shell {
+  position: absolute;
+  inset: 0;
+}
+.mx3-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+/* The scroll surface sits over the canvas and owns the pointer; the canvas is
+   only ever drawn to. */
+.mx3-scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.mx3-spacer {
+  width: 1px;
+}
+.mx3-head {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.2rem var(--pad);
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.92), transparent);
+}
+.mx3-head h2 {
+  margin: 0;
+}
+.mx3-head .cat-close {
+  pointer-events: auto;
+  background: rgba(255, 255, 255, 0.9);
+}
+.mx3-filters {
+  position: absolute;
+  left: var(--pad);
+  bottom: 1.2rem;
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  max-width: calc(100% - 2 * var(--pad));
+}
+.mx3-hint {
+  position: absolute;
+  right: var(--pad);
+  bottom: 1.5rem;
+  margin: 0;
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  pointer-events: none;
+}
+/* Label follows the cursor, drawn in the same plate language as the specs. */
+.mx3-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 2px;
+  will-change: transform;
+}
+.mx3-label b {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1rem;
+}
+.mx3-label span {
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.66);
+}
+
+/* The catalogue lives on the same drafting grid as the buildings do. */
+.cat-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: none;
+  background-color: rgba(252, 252, 251, 0.97);
+  background-image:
+    linear-gradient(to right, var(--line-major) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line-major) 1px, transparent 1px),
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size:
+    var(--major) var(--major),
+    var(--major) var(--major),
+    var(--cell) var(--cell),
+    var(--cell) var(--cell);
+  overflow-y: auto;
+  padding: var(--pad);
+}
+.cat-sheet {
+  background: transparent;
+  border: 0;
+}
+.cat-card {
+  appearance: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 0.9rem;
+  gap: 0.7rem;
+}
+.spec-tight li {
+  padding: 0.5rem 0;
+  font-size: 0.83rem;
+}
+.cat-overlay.open {
+  display: block;
+}
+body.locked {
+  overflow: hidden;
+}
+.cat-sheet {
+  max-width: 68rem;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 1.6rem;
+}
+.cat-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+.cat-head h2 {
+  margin: 0;
+}
+.cat-close {
+  appearance: none;
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--rule);
+  background: none;
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--ink-2);
+}
+.cat-close:hover {
+  color: var(--ink);
+  border-color: var(--ink-3);
+}
+.cat-modes {
+  display: flex;
+  gap: 0.3rem;
+  padding-bottom: 1rem;
+}
+
+/* --- the style × size matrix --------------------------------------------- */
+.mx-wrap {
+  overflow-x: auto;
+  padding-bottom: 0.6rem;
+  border-top: 1px solid var(--rule);
+  padding-top: 1rem;
+}
+.mx {
+  display: grid;
+  grid-template-columns: 9.5rem repeat(var(--cols), minmax(6.6rem, 1fr));
+  gap: 0.4rem;
+  min-width: 56rem;
+}
+.mx-colhead {
+  text-align: center;
+  padding: 0.3rem 0.2rem 0.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+.mx-colhead b {
+  display: block;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+.mx-colhead span,
+.mx-rowhead span {
+  display: block;
+  font-size: 0.62rem;
+  color: var(--ink-3);
+  line-height: 1.3;
+}
+.mx-rowhead {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.4rem 0.7rem 0.4rem 0;
+  border-right: 1px solid var(--rule);
+}
+.mx-rowhead b {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.1rem;
+}
+.mx-cell {
+  appearance: none;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  padding: 0.25rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+.mx-cell:hover {
+  border-color: var(--ink-3);
+  background: rgba(22, 24, 28, 0.03);
+  transform: translateY(-2px);
+}
+.mx-cell.picked {
+  border-color: var(--accent);
+  background: rgba(22, 24, 28, 0.04);
+}
+.mx-draw {
+  display: block;
+  width: 100%;
+}
+.mx-draw img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.mx-price {
+  font-size: 0.68rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- model detail -------------------------------------------------------- */
+.det {
+  border-top: 1px solid var(--rule);
+  padding-top: 1.2rem;
+}
+.det-main {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 1.6rem;
+  align-items: start;
+}
+.det-shot {
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: repeating-conic-gradient(#fbfbfa 0% 25%, #fff 0% 50%) 50% / 18px 18px;
+}
+.det-shot img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.det-info .tagline {
+  margin-top: 0;
+}
+.det-info table.cmp {
+  margin: 0.9rem 0 1.2rem;
+}
+.det-media {
+  margin-top: 1.6rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.det-photos {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+.det-reels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 130px));
+  gap: 0.5rem;
+}
+
+.cat-filters {
+  display: flex;
+  gap: 1.6rem;
+  flex-wrap: wrap;
+  padding: 1rem 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.cat-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 1rem;
+  margin: 1.3rem 0;
+}
+.cat-card {
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.cat-card:hover {
+  border-color: var(--ink-3);
+  transform: translateY(-2px);
+}
+.cat-pick {
+  appearance: none;
+  background: none;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.cat-draw {
+  display: block;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+.cat-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+.cat-meta b {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.15rem;
+}
+.cat-cat {
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.cat-size,
+.cat-price {
+  font-size: 0.8rem;
+  color: var(--ink-2);
+}
+.cat-price {
+  font-weight: 600;
+  color: var(--ink);
+}
+.cat-cmp {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.9rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.75rem;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.cat-compare {
+  border-top: 1px solid var(--rule);
+  padding-top: 1rem;
+}
+.cmp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+.cat-clear {
+  appearance: none;
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+table.cmp {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+table.cmp th,
+table.cmp td {
+  text-align: left;
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid var(--rule);
+}
+table.cmp thead th {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1rem;
+}
+table.cmp tbody th {
+  font-size: 0.64rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 400;
+  width: 30%;
+}
+
+.ghost-sm {
+  font-size: 0.78rem;
+  padding: 0.4rem 0.2rem;
+  flex: 0 0 auto;
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 2.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0;
+  animation: bob 2.6s ease-in-out infinite;
+}
+@keyframes bob {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translate(-50%, 6px);
+    opacity: 1;
+  }
+}
+
+.foot {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.6rem var(--pad);
+  border-top: 1px solid var(--rule);
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 0.76rem;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+}
+
+/* --- responsive ---------------------------------------------------------- */
+@media (max-width: 860px) {
+  .bar-main {
+    gap: 0.7rem;
+  }
+  .cats,
+  .tabs {
+    width: 100%;
+    margin: 0;
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  .cats::-webkit-scrollbar,
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .cats {
+    order: 3;
+  }
+  /* The building gets the top of the screen, the copy sits under it. Before
+     this the copy ran nearly the full viewport height and the model was a
+     sliver behind it — and because drag is bound to the canvas, a copy panel
+     covering the screen also meant there was nowhere left to drag. */
+  .panel {
+    padding-top: 42svh;
+    padding-bottom: 5.5rem;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100svh;
+  }
+  .copy {
+    max-height: 52svh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .copy {
+    max-width: 100%;
+    background: rgba(255, 255, 255, 0.93);
+    border: 1px solid var(--rule);
+    padding: 1.1rem 1.2rem;
+  }
+  /* The hero panel grew past the viewport height once it carried the full
+     spec, which buried the building behind a wall of text on a phone. Two
+     columns of specs and a tighter plate bring it back inside one screen. */
+  .spec-tight {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1rem;
+    margin: 1rem 0;
+  }
+  .spec-tight li {
+    padding: 0.4rem 0;
+    font-size: 0.78rem;
+  }
+  .plate {
+    margin: 1rem 0 1.1rem;
+  }
+  .plate dd {
+    font-size: 0.84rem;
+  }
+  #s-hero h1 {
+    font-size: clamp(2.1rem, 11vw, 3rem);
+  }
+  #s-hero .lede {
+    font-size: 0.92rem !important;
+  }
+  .dims {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  /* One column of controls — two would squeeze the sliders to uselessness. */
+  .cfg,
+  .lots,
+  .media-split,
+  .q-row {
+    grid-template-columns: 1fr;
+  }
+  .q-row {
+    gap: 0;
+  }
+  .q-row label {
+    margin-bottom: 0.8rem;
+  }
+  .viewbar {
+    left: var(--pad);
+    right: var(--pad);
+    bottom: 0.8rem;
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  .viewbar::-webkit-scrollbar {
+    display: none;
+  }
+  .drag-hint {
+    display: none;
+  }
+  /* On touch there's no wheel to miss, and the viewbar already crowds the
+     bottom edge — the pad only earns its space on pointer devices. */
+  .navpad {
+    display: none;
+  }
+  .cfg-ways {
+    grid-template-columns: 1fr;
+  }
+  .lb-nav {
+    width: 2.4rem;
+    height: 2.4rem;
+    font-size: 1.3rem;
+  }
+  .viewgroup button {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.7rem;
+  }
+  .panel:not(.align-center) {
+    padding-bottom: 6rem;
+  }
+  .cat-sheet {
+    padding: 1rem;
+  }
+  .cat-filters {
+    gap: 1rem;
+  }
+  .cat-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  /* The matrix keeps its shape and scrolls sideways — collapsing it to one
+     column would destroy the thing that makes it a matrix. */
+  .mx {
+    min-width: 46rem;
+    grid-template-columns: 6.5rem repeat(var(--cols), minmax(5.2rem, 1fr));
+  }
+  .mx-rowhead span {
+    display: none;
+  }
+  /* One column — a 120px render next to a spec table helps nobody. */
+  .det-main {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .det-photos {
+    grid-template-columns: 1fr 1fr;
+  }
+  .det-reels {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .plate,
+  .plate-4 {
+    flex-wrap: wrap;
+  }
+  .scroll-hint {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .copy,
+  .scroll-hint {
+    transition: none;
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --- three rotations ------------------------------------------------------ */
+.lots-link {
+  position: fixed;
+  top: 0.72rem;
+  right: var(--pad);
+  z-index: 45;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4ch;
+  text-decoration: none;
+  color: var(--ink-2);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  padding: 0.32rem 0.55rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  backdrop-filter: blur(8px);
+}
+.lots-link i { font-style: normal; color: var(--ink-3); }
+.lots-link em {
+  font-style: normal;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-left: 0.5ch;
+}
+.lots-link:hover { border-color: var(--accent); }
+
+.rotations {
+  position: fixed;
+  top: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 45;
+  display: flex;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+}
+.rotations button {
+  appearance: none;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  padding: 0.45rem 0.9rem;
+  color: var(--ink-2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rotations button[aria-pressed='true'] { background: var(--ink); color: #fff; }
+.rotations button:hover:not([aria-pressed='true']) { background: rgba(22,24,28,0.06); }
+
+/* The palette: fixed, so a full 360 of the building never costs you your
+   colour options. Dismissed with Finished, which moves you on. */
+.dock {
+  position: fixed;
+  right: var(--pad);
+  top: 50%;
+  /* Drift is driven from JS as a 0..1 value. At rest it sits centred; left
+     alone it slides out of the way like anything else on the page would. */
+  transform: translate(calc(var(--dock-drift, 0) * 135%), -50%);
+  opacity: calc(1 - var(--dock-drift, 0) * 0.85);
+  transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.45s ease;
+  z-index: 32;
+  width: min(23rem, 40vw);
+  max-height: 78vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1rem 1.1rem;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 40px rgba(22, 24, 28, 0.08);
+}
+.dock[hidden] { display: none; }
+.dock-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--rule);
+}
+.dock-head b { font-family: var(--display); font-weight: 400; font-size: 1.15rem; }
+.dock .cfg { border: 0; margin: 0.8rem 0; padding: 0; grid-template-columns: 1fr; }
+.dock-plate { margin: 0; }
+
+@media (max-width: 860px) {
+  .lots-link { font-size: 0.62rem; padding: 0.28rem 0.4rem; }
+  .lots-link em { display: none; }
+  .rotations button { padding: 0.4rem 0.55rem; font-size: 0.68rem; }
+  /* This sets the shape of the bottom sheet; where the two docks actually SIT
+     is settled at the foot of the file, because a later layer re-positions
+     .dock-l unconditionally and would otherwise drop it back on top of this
+     one. The right-align for .rotations that used to live here has gone: a
+     later layer centres the switcher, which is the current design, and the
+     rule here could never apply. */
+  .dock {
+    right: 0.5rem;
+    left: 0.5rem;
+    width: auto;
+    top: auto;
+    transform: translateY(calc(var(--dock-drift, 0) * 135%));
+  }
+}
+
+/* --- view 3: the triptych ------------------------------------------------- */
+/* FAQ left, the building showing through the middle, quote right, and what
+   we've built along the bottom. The middle column is deliberately empty — it
+   is a window onto the 3D scene, not a container. */
+.triptych {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 1rem;
+  width: 100%;
+  max-width: 92rem;
+  margin: 0 auto;
+  align-items: start;
+  pointer-events: none;
+}
+.triptych > * {
+  pointer-events: auto;
+}
+.tri-left,
+.tri-right {
+  max-height: 62svh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.1rem 1.2rem;
+}
+.tri-mid {
+  /* No background: the shed is behind this column and must stay visible. */
+  background: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 40svh;
+  align-self: stretch;
+}
+.tri-nav {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  backdrop-filter: blur(8px);
+}
+.tri-strip {
+  grid-column: 1 / -1;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 0.8rem 1rem;
+}
+.tri-strip .cfg-label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.tri-strip .plates-row {
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  margin: 0.4rem 0;
+  max-height: 15svh;
+  overflow: hidden;
+}
+.tri-strip .media-reels {
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  margin-top: 0.5rem;
+}
+.tri-right .quote label { margin-bottom: 0.5rem; }
+.tri-right .lots { margin: 0.8rem 0 0; }
+
+/* The narrow-screen stacking for the triptych is at the foot of this file, not
+   here. Two later audit layers re-set .triptych's columns unconditionally, and
+   a media query carries no specificity of its own, so a stacking rule at this
+   point in the source loses to them and never applies. */
+
+/* --- standalone pages ----------------------------------------------------- */
+body.page { overflow-x: hidden; }
+.page-main {
+  position: relative;
+  z-index: 20;
+  max-width: 78rem;
+  margin: 0 auto;
+  padding: 8rem var(--pad) 5rem;
+}
+.page-main > h1 { margin: 0 0 1.4rem; }
+.page-main .lede { max-width: 40rem; }
+.page .cats a { text-decoration: none; }
+
+.faq-page { margin: 1.5rem 0 2rem; max-width: 48rem; }
+
+.lot-block { margin: 2.4rem 0 3rem; }
+.lot-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--rule);
+}
+.lot-head h2 { margin: 0; }
+.lot-head a { color: var(--ink-2); text-decoration: none; font-size: 0.86rem; }
+.lot-head a:hover { color: var(--accent); }
+
+.inv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 1px;
+  margin-top: 1.2rem;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+}
+.inv-card {
+  background: rgba(255, 255, 255, 0.94);
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.inv-card .plate-frame { aspect-ratio: 4 / 3; overflow: hidden; display: block; }
+.inv-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.inv-meta { display: flex; flex-direction: column; gap: 0.15rem; }
+.inv-meta b { font-family: var(--display); font-weight: 400; font-size: 1.1rem; }
+.inv-size { font-size: 0.8rem; color: var(--ink-2); }
+.inv-price { font-size: 0.82rem; font-weight: 600; }
+.inv-card .ghost { align-self: flex-start; font-size: 0.78rem; }
+
+/* Build story: fills the modal rather than sitting in a small box. */
+.story-sheet {
+  max-width: 74rem;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 1.4rem;
+}
+.story-hero { margin: 0.8rem 0 1.2rem; border: 1px solid var(--rule); }
+.story-hero img { width: 100%; height: auto; display: block; max-height: 52svh; object-fit: cover; }
+.story-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; }
+.story-steps { list-style: none; margin: 0.6rem 0 0; padding: 0; }
+.story-steps li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+.story-steps b { font-size: 0.88rem; }
+.story-steps span { font-size: 0.82rem; color: var(--ink-2); }
+.story-shots { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; align-content: start; }
+@media (max-width: 860px) {
+  .story-grid { grid-template-columns: 1fr; }
+  .page-main { padding-top: 7rem; }
+}
+
+/* --- audit fixes ---------------------------------------------------------- */
+/* Two lots, two links. It was one anchor with a pipe between the names, which
+   read as a single destination and behaved like one. */
+.lots-link { gap: 0.1rem; padding: 0; border: 0; background: none; backdrop-filter: none; }
+.lots-link a {
+  color: var(--ink-2);
+  text-decoration: none;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  padding: 0.34rem 0.6rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  backdrop-filter: blur(8px);
+}
+.lots-link a:hover { color: var(--ink); border-color: var(--accent); }
+
+/* Page links belong in the column heading, not at the bottom of a panel that
+   scrolls — that is where they were, and why they were never found. */
+.col-link {
+  float: right;
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  text-decoration: none;
+  text-transform: none;
+}
+.col-link:hover { text-decoration: underline; }
+
+/* Size left, colour right. */
+.dock-l { left: var(--pad); right: auto; transform: translate(calc(var(--dock-drift, 0) * -135%), -50%); }
+.dims-dock { grid-template-columns: repeat(4, 1fr); margin: 0.7rem 0; }
+.dims-dock .dim b { font-size: 1.05rem; }
+.dock-l .cfg { grid-template-columns: 1fr; }
+
+/* Push the outer columns to the edges so the building gets the middle. */
+.triptych { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.5fr) minmax(0, 0.9fr); gap: 2rem; max-width: 100rem; }
+
+/* The built strip runs as a conveyor rather than a static row. */
+.tri-strip .plates-row {
+  display: flex;
+  gap: 1px;
+  overflow: hidden;
+  max-height: none;
+  border: 0;
+  background: none;
+  mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+}
+.tri-strip .plates-row .plate { flex: 0 0 8.5rem; }
+.belt-track {
+  display: flex;
+  gap: 1px;
+  animation: belt 60s linear infinite;
+}
+.tri-strip:hover .belt-track { animation-play-state: paused; }
+@keyframes belt {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+body.no-motion .belt-track { animation: none; }
+
+/* --- layout audit 2 ------------------------------------------------------- */
+/* The view switcher belongs at the foot of the screen, not stacked on top of
+   the wordmark and the category nav. */
+.rotations {
+  top: auto;
+  bottom: 1.1rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.drag-hint { bottom: 4.2rem; }
+
+/* The columns were still crowding the building. Push them right out to the
+   edges and give the middle the room. */
+.triptych {
+  grid-template-columns: minmax(0, 0.78fr) minmax(0, 2fr) minmax(0, 0.78fr);
+  gap: 3.5rem;
+  max-width: 110rem;
+}
+
+/* A slim belt, not a grid of tiles. */
+.tri-strip {
+  padding: 0.5rem 0.8rem;
+  overflow: hidden;
+}
+.tri-strip .plates-row {
+  display: block;
+  overflow: hidden;
+  height: 5.4rem;
+  border: 0;
+  background: none;
+  margin: 0;
+  mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
+}
+.belt-track {
+  display: flex;
+  gap: 0.4rem;
+  height: 100%;
+  width: max-content;
+  animation: belt 55s linear infinite;
+}
+.tri-strip:hover .belt-track { animation-play-state: paused; }
+.belt-track .plate {
+  flex: 0 0 auto;
+  width: 7rem;
+  height: 100%;
+  padding: 0;
+  background: none;
+}
+.belt-track .plate-frame { height: 100%; aspect-ratio: auto; }
+.belt-track figcaption { display: none; }
+@keyframes belt {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+body.no-motion .belt-track { animation: none; }
+
+@media (max-width: 860px) {
+  .rotations { bottom: 0.6rem; }
+}
+
+/* --- build stories -------------------------------------------------------- */
+/* The modal appears rather than loads: it is built and shown in the same frame,
+   and clicking anywhere off the sheet returns you to what was behind it. */
+.story-sheet { max-width: 76rem; }
+.story-stand {
+  font-family: var(--display);
+  font-size: 1.15rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+  max-width: 44rem;
+  margin: 0 0 1.2rem;
+}
+.story-copy p { font-size: 0.92rem; line-height: 1.68; color: var(--ink-2); }
+.story-pull {
+  margin: 1.2rem 0;
+  padding: 0.2rem 0 0.2rem 1.1rem;
+  border-left: 2px solid var(--accent);
+  font-family: var(--display);
+  font-size: 1.1rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.story-shots { grid-template-columns: 1fr 1fr; }
+.story-shots .plate { padding: 0; background: none; }
+.story-shots .plate-frame { aspect-ratio: 4 / 3; }
+
+/* The colour dock's actions were sitting on top of the door swatches — the
+   panel scrolls, so its footer has to be part of the flow, not floating. */
+.dock .actions {
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--rule);
+  gap: 0.8rem;
+}
+.dock .actions .ghost { padding: 0.4rem 0.2rem; font-size: 0.78rem; }
+.dock-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.dock .dock-plate { margin-top: 0.9rem; }
+.dock-l .fine { margin-top: 0.6rem; }
+
+/* --- belt: images edge to edge -------------------------------------------- */
+.tri-strip { padding: 0.3rem; }
+.tri-strip .plates-row { height: 6.5rem; }
+.belt-track { gap: 2px; }
+.belt-track .plate {
+  width: 9.5rem;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: 0;
+}
+.belt-track .plate-frame { height: 100%; width: 100%; background: none; }
+.belt-track img { width: 100%; height: 100%; object-fit: cover; filter: none; }
+/* Video sits on the belt as another frame, not in a separate row. */
+.belt-track .belt-video {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: var(--ink);
+  color: #fff;
+  text-decoration: none;
+}
+.belt-track .belt-video span {
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+.belt-track .belt-video b { font-size: 1.1rem; line-height: 1; }
+.belt-track .belt-video:hover { background: var(--accent); }
+#media-reels { display: none; }
+
+/* The triptych panels fade in place. The shared .copy entrance translates
+   upward and settles, which on a full-height three-column view reads as the
+   whole thing rising too far and dropping back. */
+body.js .triptych .copy { transform: none; }
+body.js .panel.in .triptych .copy { transform: none; }
+
+/* The belt label sat on a white strip that boxed the conveyor in. */
+.tri-strip {
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.tri-strip .cfg-label {
+  font-size: 0.58rem;
+  color: var(--ink-3);
+  opacity: 0.75;
+  margin: 0 0 0.3rem 0.2rem;
+  gap: 0.7rem;
+}
+.tri-strip .cfg-label .col-link { float: none; font-size: 0.58rem; }
+
+/* 2. The middle column is a window onto the building, but as a direct child of
+   .triptych it inherited pointer-events:auto and swallowed every drag aimed at
+   the shed behind it. */
+.tri-mid { pointer-events: none; }
+
+/* --- blog feed ------------------------------------------------------------ */
+.blog-feed { margin: 1.6rem 0 2.6rem; display: flex; flex-direction: column; gap: 2rem; }
+.blog-post {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 1.6rem;
+  align-items: center;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--rule);
+}
+.blog-shot { cursor: pointer; overflow: hidden; border: 1px solid var(--rule); }
+.blog-shot img { width: 100%; height: 100%; object-fit: cover; display: block; aspect-ratio: 4 / 3; transition: transform 0.5s ease; }
+.blog-shot:hover img { transform: scale(1.03); }
+.blog-text h2 { margin: 0.2rem 0 0.6rem; }
+.blog-stand { font-family: var(--display); font-size: 1.1rem; line-height: 1.5; color: var(--ink-2); }
+.blog-excerpt { font-size: 0.9rem; line-height: 1.65; color: var(--ink-2); }
+.blog-text .cta { margin-top: 0.6rem; border: 0; cursor: pointer; font: inherit; font-size: 0.86rem; }
+
+/* --- faq page ------------------------------------------------------------- */
+.faq-aside { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin: 2rem 0; }
+.faq-card { border: 1px solid var(--rule); padding: 1.2rem; background: rgba(255,255,255,0.85); }
+.faq-card h3 { font-family: var(--display); font-weight: 400; font-size: 1.3rem; margin: 0 0 0.5rem; }
+.faq-card p { font-size: 0.88rem; line-height: 1.6; color: var(--ink-2); }
+.faq-card .cta { margin-right: 0.8rem; }
+.faq-key { list-style: none; margin: 0.6rem 0 1rem; padding: 0; }
+.faq-key li { display: flex; flex-direction: column; padding: 0.5rem 0; border-bottom: 1px solid var(--rule); }
+.faq-key b { font-size: 0.86rem; }
+.faq-key span { font-size: 0.8rem; color: var(--ink-2); }
+@media (max-width: 860px) {
+  .blog-post, .faq-aside { grid-template-columns: 1fr; }
+}
+
+/* --- customizing mode ----------------------------------------------------- */
+/* Once a value is changed, rotation stops advancing the view: the docks stay
+   put through a full turn of the building, and view 3 is held back. */
+body.customizing #s-final .triptych {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+/* When the docks time out, view 3 arrives where you are — pinned to the
+   viewport rather than scrolled to, so the shed never moves. */
+body.final-overlay #s-final {
+  position: fixed;
+  inset: 0;
+  z-index: 22;
+  min-height: 0;
+  padding: 5rem var(--pad) 5rem;
+  animation: final-in 0.6s ease both;
+}
+body.final-overlay #s-final .triptych { opacity: 1; pointer-events: auto; }
+@keyframes final-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+body.no-motion #s-final { animation: none; }
+
+/* The pinned view 3 must not become a full-screen wall over the building.
+   The section covers the viewport by design, so it has to stay transparent to
+   the pointer; only its actual panels take clicks. */
+body.final-overlay #s-final { pointer-events: none; }
+body.final-overlay .triptych { pointer-events: none; }
+body.final-overlay .triptych > * { pointer-events: auto; }
+body.final-overlay .tri-mid { pointer-events: none; }
+
+/* The pinned panels were invisible: .copy starts at opacity 0 and only reveals
+   via .panel.in, which the pinned section never gets. And the section's padding
+   put them under the fixed topbar, so the click landed on the nav instead. */
+body.final-overlay #s-final { padding-top: 8.5rem; }
+body.final-overlay .triptych .copy,
+body.final-overlay .triptych .tri-strip {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* .panel centres its content, so padding-top could not push the pinned view
+   clear of the fixed topbar — it just centred within a shorter box. Align to
+   the top so the padding actually positions it. */
+body.final-overlay #s-final {
+  align-items: flex-start;
+  justify-content: center;
+}
+
+/* ===========================================================================
+   RESPONSIVE TAIL — order matters, and it is the whole point of this section.
+
+   This stylesheet is written in layers: each "audit" block below the original
+   rules refines what came before it. That works fine for unconditional rules
+   and silently breaks media queries, because a media query carries no extra
+   specificity — a later unconditional rule beats an earlier conditional one at
+   every width. Three separate responsive rules had already been killed that
+   way (the triptych stacking, the docks' bottom-sheet position, and the view
+   switcher's mobile alignment), which is why view 3 and the customize docks
+   were unusable below 1100px.
+
+   So everything width-dependent lives here, at the very end, widest first.
+   Adding an unconditional rule AFTER this section will break it again.
+   =========================================================================== */
+
+/* --- view 3: mid widths --------------------------------------------------- */
+/* The audit layers pushed the outer columns to 0.78fr so the building could
+   have the middle. That reads well past 1600px and badly just above the
+   stacking breakpoint, where 0.78fr of what was left gave the quote form 132px
+   with 78px inputs — present, not usable.
+   A floor on the side tracks fixes it without touching the wide layout: the
+   middle column is the flexible one, so it absorbs the squeeze. Past about
+   1500px both fr values already exceed 15rem and this changes nothing. */
+.triptych {
+  grid-template-columns: minmax(15rem, 0.78fr) minmax(0, 2fr) minmax(15rem, 0.78fr);
+}
+
+/* --- the foot of the screen ----------------------------------------------- */
+/* The backdrop bar is anchored to the right edge and the view switcher to the
+   centre, so they meet once the switcher's half-width reaches the bar. Measured
+   at about 1136px with the current labels — but the bar carries the season
+   badge, whose text changes as the page turns, so the crossover moves. 1200
+   keeps roughly 64px of slack rather than trusting the measurement. */
+@media (max-width: 1200px) {
+  .viewbar { bottom: 3.6rem; }
+}
+
+/* --- view 3: stacked ------------------------------------------------------ */
+@media (max-width: 1100px) {
+  .triptych {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    /* The audit layers opened the gap to 3.5rem to give the building room
+       between the columns. Stacked there is no building between them, and it
+       becomes 56px of dead air between every row. */
+    gap: 1rem;
+  }
+  /* The middle column is a window onto the shed, not a container — stacked it
+     is just an empty 40svh hole. */
+  .tri-mid { display: none; }
+  /* 62svh of inner scroll inside a page that already scrolls is a trap on a
+     phone; let the columns run their natural height. */
+  .tri-left,
+  .tri-right { max-height: none; }
+  .tri-strip { grid-column: auto; }
+}
+
+/* --- narrow screens: four fixed things, one screen bottom ----------------- */
+/* The view switcher, the backdrop bar and BOTH docks all want the foot of a
+   phone. They were positioned independently and landed on each other: the
+   bottom-sheet rule further up targets .dock, which is both docks, so they
+   overlapped almost exactly once a later layer re-pinned .dock-l to the left
+   edge. Give each one its own band. */
+@media (max-width: 860px) {
+  :root {
+    /* One sheet. Two stacked, plus the bars, is roughly 57svh — the building
+       keeps the top of the screen. */
+    --sheet: 23svh;
+  }
+  .rotations { bottom: 0.6rem; }
+  .viewbar { bottom: 2.9rem; }
+
+  .dock-l,
+  .dock-r {
+    left: 0.5rem;
+    right: 0.5rem;
+    width: auto;
+    top: auto;
+    max-height: var(--sheet);
+    /* Pinned to the bottom here, so drifting away is straight down for both.
+       The desktop rule pairs a horizontal drift with -50% Y to go with
+       top:50%; kept here it would offset each sheet by half its own height. */
+    transform: translateY(calc(var(--dock-drift, 0) * 135%));
+  }
+  /* Colour sits above the bars; size stacks on top of colour. */
+  .dock-r { bottom: 5.4rem; }
+  .dock-l { bottom: calc(5.4rem + var(--sheet) + 0.4rem); }
+}
