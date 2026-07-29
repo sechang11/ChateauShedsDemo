@@ -42,6 +42,13 @@
       <nav class="tabs" id="tabs" role="tablist" aria-label="Models"></nav>
     </header>
 
+    <!-- Phones do not have room for a permanent row of scene toggles next to
+         the view switcher, so on narrow screens the viewbar collapses behind
+         this and slides up on demand. Hidden on desktop, where the bar has its
+         own corner and needs no disclosure. -->
+    <button class="viewbar-toggle" type="button" id="viewbar-toggle" aria-expanded="false"
+            aria-controls="viewbar">View</button>
+
     <div class="viewbar" id="viewbar">
       <div class="viewgroup" role="group" aria-label="Backdrop" data-group="env"></div>
       <div class="viewgroup" role="group" aria-label="Framing">
@@ -92,10 +99,14 @@
             <button class="ghost" type="button" id="hero-browse">All models</button>
             <button class="ghost" type="button" data-goto="s-final">Get a quote</button>
           </div>
-          <p class="fine">
+          <p class="fine fine-long">
             * Demo configurator. Sample figures — not a quote, and not confirmed
             orderable. What we actually build runs wider than what fits here.
           </p>
+          <!-- Phones get the one-line version: the hero has ~200px for words
+               there, and the full wording still sits above the quote form,
+               which is where it actually matters. -->
+          <p class="fine fine-short">* Demo — sample figures, not a quote.</p>
         </div>
         <p class="scroll-hint">Drag the building to walk around it</p>
       </section>

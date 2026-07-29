@@ -2807,3 +2807,194 @@ body.final-overlay #s-final {
     right: 0.5rem;
   }
 }
+
+/* ===========================================================================
+   NARROW-SCREEN UI PASS
+
+   The first split gave the model and the words half the screen each. Measured
+   on a 400x800 phone that meant: chrome 174px (22%), model band 352px, and a
+   354px words band holding 695px of desktop content — a 1.97x overflow made of
+   a lede paragraph, a three-item plate, a six-row spec table, three stacked
+   buttons and a disclaimer. The building ended up about a fifth of the screen
+   with a wall of text under it.
+
+   Geometry could not fix that; the content had to come down first. On a phone
+   view 1 is a summary card — what it is, the headline numbers, one action —
+   and everything cut from it is still reachable: the specs live in the Size
+   dock, "All models" is in the topbar, "Get a quote" is the bottom switcher.
+
+   Must stay after the blocks above: it re-anchors the same elements.
+   =========================================================================== */
+@media (max-width: 860px) {
+  /* --- how the screen is divided, per view -------------------------------- */
+  /* One ratio cannot serve all three: view 1 is the building, view 2 has two
+     dock sheets to fit, view 3 has a FAQ and a form. setViewAttr() calls
+     stage.resize() when this changes so the drawing buffer follows. */
+  /* 56 rather than 62: at 62 the card had 202px for 258px of content and
+     scrolled, and a summary card that scrolls is the density this pass exists
+     to remove. Six points of model height buys a card that never moves. */
+  body[data-view='customize'] { --stage-h: 56svh; }
+  body[data-view='inventory'] { --stage-h: 40svh; }
+  body[data-view='final'] { --stage-h: 34svh; }
+
+  /* --- view 1: a summary card, not a page of copy ------------------------- */
+  /* The card hugs its content at the foot of the band instead of stretching to
+     fill it, so every pixel it does not need goes to the building. */
+  body.js[data-view='customize'] #s-hero .copy {
+    top: auto;
+    height: auto;
+    max-height: calc(100svh - var(--stage-h) - var(--band-bottom) - 1rem);
+    padding: 0.9rem 1rem 1rem;
+  }
+  /* Cut from the phone hero, all of it reachable elsewhere:
+       .eyelid     the category, already the topbar's job
+       .lede       95px of prose the building itself is saying
+       .spec-list  six rows that are the Size dock's whole purpose
+     .plate keeps the headline numbers but lies down into one row. */
+  #s-hero .copy > .eyelid,
+  #s-hero .copy > .lede,
+  #s-hero .copy > .spec-list { display: none; }
+
+  #s-hero h1 { margin: 0 0 0.1rem; }
+  #s-hero .copy > .tagline { margin: 0 0 0.6rem; }
+
+  #s-hero .copy > .plate {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.9rem;
+    margin: 0 0 0.8rem;
+    padding: 0.5rem 0 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  #s-hero .copy > .plate::-webkit-scrollbar { display: none; }
+  #s-hero .copy > .plate > div {
+    flex: 0 0 auto;
+    padding: 0;
+    border: 0;
+  }
+  #s-hero .copy > .plate dt { font-size: 0.6rem; letter-spacing: 0.1em; }
+  #s-hero .copy > .plate dd { font-size: 0.95rem; margin: 0.1rem 0 0; }
+
+  /* One primary action. The other two are the topbar's "All models" and the
+     bottom switcher's "Quote & FAQ" — repeating them here cost 115px. */
+  #s-hero .copy > .actions {
+    display: block;
+    margin: 0 0 0.55rem;
+  }
+  #s-hero .copy > .actions > #hero-browse,
+  #s-hero .copy > .actions > [data-goto='s-final'] { display: none; }
+  #s-hero .copy > .actions > .cta {
+    display: block;
+    width: 100%;
+    text-align: center;
+  }
+
+  .fine-long { display: none; }
+  .fine-short { display: block; margin: 0; }
+
+  /* --- chrome ------------------------------------------------------------- */
+  /* Slimmer topbar: two rows were 114px, 14% of the screen before anything. */
+  .topbar { padding-top: 0.45rem; padding-bottom: 0.35rem; gap: 0.3rem; }
+  .bar-main { gap: 0.5rem; }
+  .tabs { padding-top: 0.1rem; }
+
+  /* The lots link sat top-right against the wordmark. Both lots have their own
+     section, with a map, on the inventory page. */
+  .lots-link { display: none; }
+
+  /* Scene toggles behind a disclosure rather than a permanent row. */
+  .viewbar-toggle {
+    position: fixed;
+    right: var(--pad);
+    bottom: 0.6rem;
+    z-index: 46;
+    display: block;
+    padding: 0.4rem 0.7rem;
+    font: inherit;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    backdrop-filter: blur(8px);
+  }
+  .viewbar-toggle[aria-expanded='true'] {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .viewbar {
+    bottom: 3.1rem;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(0.4rem);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+  body.viewbar-open .viewbar {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+  }
+  /* The switcher keeps the left of the bottom row; the toggle takes the right. */
+  .rotations {
+    left: var(--pad);
+    right: auto;
+    transform: none;
+    bottom: 0.6rem;
+  }
+}
+
+/* Desktop keeps the permanent viewbar and needs no disclosure. Paired as a
+   mutually exclusive query rather than a base rule the narrow block overrides,
+   so neither depends on source order to win. */
+@media (min-width: 861px) {
+  .viewbar-toggle { display: none; }
+  /* Without this the hero carries BOTH disclaimers on desktop: the narrow
+     block hides .fine-long and reveals .fine-short, but nothing was hiding
+     .fine-short anywhere else, and a bare <p> shows by default. */
+  .fine-short { display: none; }
+}
+
+/* --- narrow screens: tighten the card's own spacing ----------------------- */
+/* 258px of card content was 177px of type and 81px of gaps. The gaps were
+   authored for a full-height copy column, not a 200px card. */
+@media (max-width: 860px) {
+  body.js[data-view='customize'] #s-hero .copy { padding: 0.75rem 1rem 0.8rem; }
+  #s-hero .copy > .tagline { margin: 0 0 0.45rem; }
+  #s-hero .copy > .plate { margin: 0 0 0.6rem; padding-top: 0.45rem; }
+  #s-hero .copy > .actions { margin: 0 0 0.4rem; }
+}
+
+/* --- short phones --------------------------------------------------------- */
+/* A 640px screen leaves the card ~180px. The headline numbers are the first
+   thing that can go: footprint and roofline are both in the Size dock, and the
+   building on screen is already showing its shape. */
+@media (max-width: 860px) and (max-height: 700px) {
+  #s-hero .copy > .plate { display: none; }
+  /* Even without the plate a 640px screen left the card 5px short of its own
+     content. Take it out of the padding rather than the type. */
+  body.js[data-view='customize'] #s-hero .copy { padding: 0.6rem 1rem 0.65rem; }
+  #s-hero .copy > .actions { margin: 0 0 0.3rem; }
+}
+
+/* --- landscape phones: re-assert the split ratios -------------------------- */
+/* The per-view --stage-h rules above are body[data-view=...] (0,1,1) and beat
+   the :root declaration in the earlier landscape block (0,1,0), so landscape
+   was inheriting portrait's 56% model. On a 400px-tall screen that left the
+   card 74px for 185px of content. Restate the ratios at the same specificity,
+   after those rules, and trim two more lines of copy: in landscape the height
+   is the scarce axis, so the tagline and the disclaimer go rather than the
+   model. The full disclaimer is still above the quote form. */
+@media (max-width: 860px) and (max-height: 520px) {
+  body[data-view='customize'] { --stage-h: 34svh; }
+  body[data-view='inventory'] { --stage-h: 30svh; }
+  body[data-view='final'] { --stage-h: 26svh; }
+
+  #s-hero .copy > .tagline,
+  #s-hero .copy > .fine { display: none; }
+  #s-hero h1 { margin: 0 0 0.4rem; }
+}

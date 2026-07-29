@@ -1284,8 +1284,27 @@ let rotation = 'customize';
 // honest, and that listener already fires on the idle orbit's own programmatic
 // scrolls. So it costs one attribute write and no new state.
 const setViewAttr = (id) => {
+  if (document.body.dataset.view === id) return;
   document.body.dataset.view = id;
+  // Each view gets a different share of a phone screen: view 1 is the building
+  // and wants most of it, view 2 has two dock sheets to fit, view 3 has a FAQ
+  // and a form. The stylesheet varies --stage-h per view to suit, which changes
+  // the canvas box, and the renderer only ever re-reads that on a window
+  // resize. Without this the drawing buffer keeps the previous view's aspect
+  // and the building comes out stretched.
+  if (stage) stage.resize();
+  // Collapse the scene toggles again on a view change; leaving them open over
+  // the next view is just clutter the user did not ask for.
+  closeViewbar();
 };
+
+// The scene toggles are a disclosure on narrow screens (see the button in
+// index.html). Defined before setViewAttr runs at init.
+function closeViewbar() {
+  document.body.classList.remove('viewbar-open');
+  const t = document.getElementById('viewbar-toggle');
+  if (t) t.setAttribute('aria-expanded', 'false');
+}
 
 function setRotation(id) {
   resetDockIdle();
@@ -1311,6 +1330,23 @@ document.getElementById('rotations').addEventListener('click', (e) => {
   const b = e.target.closest('button[data-rot]');
   if (b) setRotation(b.dataset.rot);
 });
+
+// Scene toggles as a disclosure on phones. Tapping the button counts as input,
+// so the idle orbit does not turn the page under someone reaching for a swatch.
+const viewbarToggle = document.getElementById('viewbar-toggle');
+if (viewbarToggle) {
+  viewbarToggle.addEventListener('click', () => {
+    const open = document.body.classList.toggle('viewbar-open');
+    viewbarToggle.setAttribute('aria-expanded', String(open));
+    noteInput();
+  });
+  // Anywhere else on the page closes it, the way a menu should behave.
+  document.addEventListener('pointerdown', (e) => {
+    if (!document.body.classList.contains('viewbar-open')) return;
+    if (e.target.closest('#viewbar') || e.target.closest('#viewbar-toggle')) return;
+    closeViewbar();
+  });
+}
 
 // Finished puts the palette away and hands you to the last rotation.
 
