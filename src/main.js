@@ -1270,9 +1270,27 @@ const ROTATIONS = {
 };
 let rotation = 'customize';
 
+// Which view owns the screen, as an attribute the stylesheet can switch on.
+//
+// The narrow layout shows one view's words at a time, and that cannot ride on
+// the .panel.in class: the IntersectionObserver only ever ADDS .in (see the
+// observer at the init block below), so once view 3 has been on screen once,
+// every panel carries it for the rest of the session and all three bands are
+// "active" at the same time, stacked in the same box. An add-only class can
+// reveal but can never conceal.
+//
+// `rotation` is already the answer to "which view is this", it is already
+// recomputed from scroll position by the listener that keeps the switcher
+// honest, and that listener already fires on the idle orbit's own programmatic
+// scrolls. So it costs one attribute write and no new state.
+const setViewAttr = (id) => {
+  document.body.dataset.view = id;
+};
+
 function setRotation(id) {
   resetDockIdle();
   rotation = ROTATIONS[id] ? id : 'customize';
+  setViewAttr(rotation);
   const cfg = ROTATIONS[rotation];
   dock.hidden = !cfg.dock;
   if (dockLeft) dockLeft.hidden = !cfg.dock;
@@ -1310,6 +1328,7 @@ window.addEventListener(
     }
     if (best !== rotation) {
       rotation = best;
+      setViewAttr(best);
       // Customizing pins the docks open regardless of where the rotation is.
       const showDock = customizing || ROTATIONS[best].dock;
       if (showDock && dock.hidden) resetDockIdle();
@@ -1424,16 +1443,34 @@ document.addEventListener('click', (e) => {
 
 // Panels that legitimately scroll their own overflow. Everything else swallows
 // the wheel: the page is driven by dragging, the nav and the idle orbit.
-const SCROLLERS = ".dock, .cat-overlay, .tri-left, .tri-right, .lb, .mx3-scroll, .page-main";
+const SCROLLERS =
+  ".dock, .cat-overlay, .tri-left, .tri-right, .lb, .mx3-scroll, .page-main, .copy, .triptych";
+
+/**
+ * The nearest ancestor that both matches SCROLLERS and actually has overflow.
+ *
+ * closest() alone stops at the first *selector* match and answers with it even
+ * when it cannot scroll, which silently swallows the wheel for everything
+ * above it. On narrow screens the copy band is exactly that shape: the wheel
+ * lands in .tri-left, which is in the list but which the narrow layout makes
+ * static and non-overflowing, while the element that really scrolls is the
+ * .triptych above it. Keep walking instead of trusting the first hit.
+ */
+function scrollableAncestor(node) {
+  for (let el = node; el && el !== document.body; el = el.parentElement) {
+    if (el.matches && el.matches(SCROLLERS) && el.scrollHeight - el.clientHeight > 2) return el;
+  }
+  return null;
+}
+
 window.addEventListener(
   "wheel",
   (e) => {
-    const panel = e.target.closest && e.target.closest(SCROLLERS);
+    const panel = e.target instanceof Element ? scrollableAncestor(e.target) : null;
     if (panel) {
-      const canScroll = panel.scrollHeight - panel.clientHeight > 2;
       const atTop = panel.scrollTop <= 0 && e.deltaY < 0;
       const atEnd = panel.scrollTop >= panel.scrollHeight - panel.clientHeight - 1 && e.deltaY > 0;
-      if (canScroll && !atTop && !atEnd) return;
+      if (!atTop && !atEnd) return;
     }
     e.preventDefault();
   },

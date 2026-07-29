@@ -2679,7 +2679,29 @@ body.final-overlay #s-final {
        existing IntersectionObserver reveal decides which that is. */
     pointer-events: none;
   }
-  body.js .panel.in .copy { pointer-events: auto; }
+  /* Which band is showing is decided by body[data-view], NOT by .panel.in.
+     The observer that sets .in only ever adds it, so after view 3 has been
+     seen once every panel keeps it and .in stops distinguishing anything.
+     These selectors carry an id so they outrank body.js .panel.in .copy
+     (0,3,1) further up the file, which would otherwise force all of them
+     visible at once — the hidden state has to win, and losing it produces
+     stacked panels rather than an error. */
+  body.js #s-hero .copy,
+  body.js #s-final .triptych {
+    opacity: 0;
+    pointer-events: none;
+  }
+  /* The children need saying separately: the base .triptych > * rule hands
+     them pointer-events:auto, so an inert, invisible view 3 still won the hit
+     test at the band centre and its FAQ was clickable over view 1's words. */
+  body.js #s-final .triptych > *,
+  body.js #s-hero .copy * { pointer-events: none; }
+  body.js[data-view='customize'] #s-hero .copy,
+  body.js[data-view='final'] #s-final .triptych {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  body.js[data-view='customize'] #s-hero .copy * { pointer-events: auto; }
 
   /* View 3 holds TWO .copy blocks (the FAQ and the quote form). The band is the
      triptych itself; those two stay in normal flow and scroll inside it. */
@@ -2698,23 +2720,17 @@ body.final-overlay #s-final {
     overflow-y: auto;
     overscroll-behavior: contain;
     z-index: 22;
-    /* Fade the whole container with its panel, not just the .copy children.
-       .tri-strip is not a .copy, so it kept opacity 1 while view 3 was
-       inactive — parked outside the band's scroll offset today, but one
-       stray scroll from showing through the hero's words. */
-    opacity: 0;
+    /* The container fades, not just its .copy children: .tri-strip is not a
+       .copy and would otherwise sit at opacity 1 behind the active view.
+       Visibility itself is set by the data-view rules above. */
     transition: opacity 0.7s ease;
   }
-  body.js #s-final.in .triptych { opacity: 1; }
-  body.js #s-final:not(.in) .triptych,
-  body.js #s-final:not(.in) .triptych > * { pointer-events: none; }
   /* .triptych is pointer-events:none by default so a drag aimed at the building
      behind it reaches the canvas. On a phone it no longer sits over the canvas
      — the model has its own band above — so that trade is off, and the rule
      would instead make the band unscrollable and the quote form unreachable.
-     Hand touches back to it while it is the active view. */
-  body.js #s-final.in .triptych,
-  body.js #s-final.in .triptych > * { pointer-events: auto; }
+     Hand touches back to its children while it is the active view. */
+  body.js[data-view='final'] #s-final .triptych > * { pointer-events: auto; }
 
   /* The panels are pure scroll runway now; their padding only ever existed to
      hold the copy clear of the building. */
