@@ -3136,3 +3136,95 @@ body.final-overlay #s-final {
   body[data-view='inventory'] { --stage-h: 30svh; }
   body[data-view='final'] { --stage-h: 26svh; }
 }
+
+/* ===========================================================================
+   THE TWO CONTAINERS
+
+   Phones get exactly two boxes: .stage-pane (grid + model) and .info-pane
+   (the words). main.js moves one panel into the info pane at a time, so the
+   info pane is the only scroll container below the model — previously each
+   panel was separately fixed into the same band and brought its own scrollbar.
+
+   Desktop is unaffected: .stage-pane is display:contents, which removes it
+   from layout entirely, and .info-pane is empty and display:none.
+   =========================================================================== */
+@media (max-width: 860px) {
+  .stage-pane {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--stage-h);
+    z-index: 1;
+    overflow: hidden;
+    /* The canvas opts back in below; nothing else here should take touches. */
+    pointer-events: none;
+  }
+  .stage-pane > .grid-bg,
+  .stage-pane > #stage,
+  .stage-pane > .dim-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  #stage {
+    pointer-events: auto;
+    /* pan-y was the reason swiping barely moved the building: it hands
+       vertical panning to the browser, so any swipe with a vertical component
+       — which is every real thumb swipe — got claimed for page scroll and the
+       pointer was cancelled part way through the drag. What rotation you did
+       see was the leftover scroll driving the camera at scroll speed.
+       The model band turns the building; the info pane scrolls on its own. */
+    touch-action: none;
+  }
+
+  .info-pane {
+    position: fixed;
+    left: var(--pad);
+    right: var(--pad);
+    top: var(--pane-top);
+    bottom: var(--band-bottom);
+    z-index: 22;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* View 1 has no picker above it, so the pane starts at the band top. */
+  body:not([data-pane]) .info-pane { top: var(--band-top); }
+
+  /* A mounted panel is plain content: the info pane owns position and scroll.
+     The id makes these (1,1,1), matching the band-positioning rules further up
+     the file and winning on order. */
+  body #info-pane > .copy,
+  body #info-pane > .dock,
+  body #info-pane > .tri-strip {
+    position: static;
+    inset: auto;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: auto;
+    max-width: none;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+    margin: 0;
+  }
+
+  /* The triptych's children are hoisted into the info pane, so the container
+     itself is an empty fixed box sitting over the band. Whichever children are
+     NOT mounted stay inside it and go with it. */
+  body.js #s-final .triptych { display: none; }
+}
+
+@media (min-width: 861px) {
+  /* display:contents removes the wrapper from layout, so the canvas and grid
+     stay exactly the fixed, full-viewport elements they have always been. */
+  .stage-pane { display: contents; }
+  .info-pane { display: none; }
+}

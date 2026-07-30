@@ -1297,6 +1297,7 @@ const setViewAttr = (id) => {
   // the next view is just clutter the user did not ask for.
   closeViewbar();
   renderSubnav();
+  mountPanel();
 };
 
 /* --------------------------------------------------- one panel at a time */
@@ -1322,9 +1323,68 @@ const PANES = {
 };
 
 const subnav = document.getElementById('subnav');
+const infoPane = document.getElementById('info-pane');
+
+/* ------------------------------------------------ the two phone containers */
+
+// On a phone the page is two containers: the stage pane holds the grid and the
+// model, the info pane holds the words. Exactly one panel lives in the info
+// pane at a time, so it is the only thing below the model that scrolls — the
+// panels themselves become plain static content inside it.
+//
+// The panels are moved rather than copied, and each remembers where it came
+// from so the desktop layout can be put back exactly. Listeners survive a
+// move, so nothing has to be rebound.
+const narrowLayout = () => window.matchMedia('(max-width: 860px)').matches;
+
+/** Which element is the body of the current view/pane, mirroring renderSubnav. */
+function currentPanelEl() {
+  if (dock && !dock.hidden) {
+    return document.body.dataset.pane === 'colour' ? dock : dockLeft;
+  }
+  if (rotation === 'final') {
+    const pane = document.body.dataset.pane || 'faq';
+    return document.querySelector(
+      pane === 'quote' ? '.tri-right' : pane === 'built' ? '.tri-strip' : '.tri-left'
+    );
+  }
+  return document.querySelector('#s-hero .copy');
+}
+
+const paneHomes = new Map();
+let mountedPanel = null;
+
+function sendPanelHome(el) {
+  const home = paneHomes.get(el);
+  if (home && home.parent) home.parent.insertBefore(el, home.next);
+}
+
+/** Put the current panel in the info pane, and everything else back. */
+function mountPanel() {
+  if (!infoPane) return;
+  if (!narrowLayout()) {
+    if (mountedPanel) sendPanelHome(mountedPanel);
+    mountedPanel = null;
+    return;
+  }
+  const el = currentPanelEl();
+  if (el === mountedPanel) return;
+  if (mountedPanel) sendPanelHome(mountedPanel);
+  mountedPanel = null;
+  if (!el) return;
+  if (!paneHomes.has(el)) paneHomes.set(el, { parent: el.parentNode, next: el.nextSibling });
+  infoPane.appendChild(el);
+  mountedPanel = el;
+  // A panel should never open already scrolled from the last time it was read.
+  infoPane.scrollTop = 0;
+}
+
+// Crossing the breakpoint has to put things back or take them over.
+window.addEventListener('resize', mountPanel);
 
 function setPane(id) {
   document.body.dataset.pane = id;
+  mountPanel();
   if (!subnav) return;
   subnav.querySelectorAll('button').forEach((b) =>
     b.setAttribute('aria-pressed', String(b.dataset.pane === id))
@@ -1343,6 +1403,7 @@ function renderSubnav() {
   subnav.innerHTML = '';
   if (!panes.length) {
     delete document.body.dataset.pane;
+    mountPanel();
     return;
   }
   for (const p of panes) {

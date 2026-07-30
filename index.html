@@ -14,9 +14,18 @@
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
-    <div class="grid-bg" aria-hidden="true"></div>
-    <canvas id="stage" aria-hidden="true"></canvas>
-    <div class="dim-layer" id="dim-layer" aria-hidden="true"></div>
+    <!-- The two containers the phone layout is built from. On desktop they are
+         inert wrappers and everything sits where it always did; on a phone the
+         stage pane is the top band and the info pane is the bottom one, and
+         main.js moves exactly one panel into the info pane at a time so there
+         is only ever a single scroll container below the model. -->
+    <div class="stage-pane" id="stage-pane">
+      <div class="grid-bg" aria-hidden="true"></div>
+      <canvas id="stage" aria-hidden="true"></canvas>
+      <div class="dim-layer" id="dim-layer" aria-hidden="true"></div>
+    </div>
+    <div class="info-pane" id="info-pane"></div>
+
     <div class="scroll-rail" aria-hidden="true"><span id="scroll-fill"></span></div>
 
     <nav class="lots-link" aria-label="Our lots">
