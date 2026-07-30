@@ -34,6 +34,12 @@ export const ZOOM_MAX = 2.0;
 const DEG_PER_FULL_DRAG = 180;
 // Below this the ratio starts to feel twitchy rather than responsive.
 const MIN_DRAG_WIDTH = 320;
+// A thumb is not a mouse. Deriving from canvas width alone still assumed the
+// gesture can use the whole width, and it cannot: a mouse drag runs as far as
+// you like, a thumb swipe stops around 250px whatever the screen is. Without
+// this a phone swipe covered ~110 degrees of a 240 degree run, so a lap took
+// several. With it one swipe is most of a lap.
+const TOUCH_GAIN = 2;
 // A 260px drag used to slam straight into the clamp; this spans about half the
 // range over a comfortable pull.
 const ZOOM_PER_PX = 0.0018;
@@ -88,7 +94,10 @@ export function attachControls(target, { onSpin, onZoom, onActive }) {
     // Drag right → building turns toward you, so negate. Read the width per
     // move rather than caching it: the canvas is a band on phones whose height
     // and width both change with the view and on rotation.
-    const degPerPx = DEG_PER_FULL_DRAG / Math.max(MIN_DRAG_WIDTH, target.clientWidth);
+    const touch = e.pointerType === 'touch' || e.pointerType === 'pen';
+    const degPerPx =
+      (DEG_PER_FULL_DRAG * (touch ? TOUCH_GAIN : 1)) /
+      Math.max(MIN_DRAG_WIDTH, target.clientWidth);
     onSpin(-dx * degPerPx);
   });
 

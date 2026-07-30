@@ -3228,3 +3228,38 @@ body.final-overlay #s-final {
   .stage-pane { display: contents; }
   .info-pane { display: none; }
 }
+
+/* --- the panel picker, made findable -------------------------------------- */
+/* Reported as "quote is missing, so is what we've built". Both were there and
+   both were reachable — measured live, the bar was rendering with all three
+   buttons and winning its own hit test. The problem was that a 30px strip of
+   small uppercase text at the top of a panel reads as that panel's heading,
+   not as a control you can press, so the other two panels may as well not have
+   existed. Make it look like the switch it is: proper tap targets, a filled
+   active segment, and a visible seam between it and the panel below. */
+@media (max-width: 860px) {
+  :root { --subnav-h: 2.75rem; }
+
+  .subnav {
+    gap: 2px;
+    background: rgba(22, 24, 28, 0.1);
+    border-color: rgba(22, 24, 28, 0.16);
+    border-radius: 3px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+  .subnav button {
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    color: var(--ink-2);
+    background: rgba(255, 255, 255, 0.96);
+    transition: background 0.15s, color 0.15s;
+  }
+  .subnav button[aria-pressed='true'] {
+    color: var(--paper);
+    background: var(--ink);
+  }
+  .subnav button:not([aria-pressed='true']):active {
+    background: rgba(22, 24, 28, 0.08);
+  }
+}
