@@ -82,14 +82,14 @@ export function openLightbox(items, start = 0) {
   lastFocus = document.activeElement;
   show();
   el.classList.add('open');
-  document.body.classList.add('locked');
+  syncLock();
   el.querySelector('.lb-close').focus();
 }
 
 export function close() {
   if (!el) return;
   el.classList.remove('open');
-  document.body.classList.remove('locked');
+  syncLock();
   // Don't leave a full-size image decoded behind the page.
   el.querySelector('img').src = '';
   if (lastFocus && lastFocus.focus) lastFocus.focus();
@@ -106,11 +106,32 @@ export function bindStrip(container, getItems) {
   // Matches both markups. The gallery moved from `.shot` tiles to `.plate`
   // tiles and this selector wasn't updated, which silently stopped every
   // photograph on the page from opening — the click just did nothing.
-  const SEL = '.shot, .plate';
+  // :not(.belt-video) because the conveyor interleaves link tiles that carry
+  // .plate too — counting them shifted every photo after the first video by one,
+  // and tiles in the doubled second half indexed past the end of the strip.
+  const SEL = '.shot, .plate:not(.belt-video)';
   container.addEventListener('click', (e) => {
     const fig = e.target.closest(SEL);
     if (!fig || !container.contains(fig)) return;
+    // Trust the index the builder stamped on the tile; fall back to DOM order
+    // for strips whose figures are 1:1 with their items (the story sheets).
     const figures = [...container.querySelectorAll(SEL)];
-    openLightbox(getItems(), figures.indexOf(fig));
+    const n = Number(fig.dataset.i);
+    openLightbox(getItems(), Number.isFinite(n) ? n : figures.indexOf(fig));
   });
+}
+
+/**
+ * body.locked has four independent owners — this lightbox, the photo archive,
+ * the catalogue and the build-story sheet. Each used to add and remove the
+ * class outright, so closing the lightbox over a still-open archive unlocked
+ * the page underneath it and the idle orbit quietly scrolled away behind the
+ * overlay. Derive it from what is actually open instead.
+ *
+ * '.lb.open' rather than '.lb': the lightbox element is created once and never
+ * removed, so a bare '.lb' would lock the page forever.
+ */
+export function syncLock() {
+  const open = document.querySelector('.cat-overlay.open, .lb.open') !== null;
+  document.body.classList.toggle('locked', open);
 }

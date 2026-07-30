@@ -3346,3 +3346,22 @@ body.final-overlay #s-final {
      genuinely empty one. */
   .subnav:empty { display: none; }
 }
+
+/* --- touch ergonomics ----------------------------------------------------- */
+/* The range track is 2px tall with a ~19px thumb, so the hit box for a slider
+   was well under the 24px WCAG floor and tap-to-jump was near impossible with a
+   thumb. Pad the control out to a real target without changing how the track
+   looks: the visible line stays 2px, drawn as a background on a taller box. */
+@media (pointer: coarse), (max-width: 860px) {
+  .cfg input[type='range'] {
+    height: 2.25rem;
+    background: linear-gradient(var(--rule), var(--rule)) center / 100% 2px no-repeat;
+    border-radius: 0;
+  }
+}
+
+/* The quote form now says something when it hands off to the mail client. */
+.q-status {
+  margin: 0.4rem 0 0;
+  color: var(--ink-2);
+}

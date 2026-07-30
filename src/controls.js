@@ -104,6 +104,13 @@ export function attachControls(target, { onSpin, onZoom, onActive }) {
   const end = (e) => {
     points.delete(e.pointerId);
     if (points.size < 2) pinchStart = 0;
+    // A pinch never lifts both fingers on the same frame. Without this the
+    // surviving finger drops straight into the single-pointer spin branch, and
+    // the ~20px of drift as a hand relaxes off the glass is ~18 degrees at
+    // touch gain — which, because spin drives scroll, can cross a view
+    // boundary. Every pinch-to-zoom ended in an unrequested rotation.
+    // The next pointerdown re-arms this, so a lost pointerup cannot strand it.
+    if (points.size === 1) dragging = false;
     if (points.size === 0) {
       dragging = false;
       setActive(false);

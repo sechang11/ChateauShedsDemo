@@ -1,6 +1,6 @@
 import { GALLERY, FAQ, img } from './content.js';
 import { MODELS, MATRIX, CATEGORIES } from './catalog.js';
-import { openLightbox, bindStrip } from './lightbox.js';
+import { openLightbox, bindStrip, syncLock } from './lightbox.js';
 
 // The three standalone pages. One module, switched on <body data-page>, because
 // they share a shell, a lightbox and a content source — three near-identical
@@ -318,7 +318,7 @@ function openStory(index, pool) {
       </p>
     </div>`;
   modal.classList.add('open');
-  document.body.classList.add('locked');
+  syncLock();
   modal.querySelector('.cat-close').addEventListener('click', closeStory);
   bindStrip(modal.querySelector('.story-shots'), () =>
     shots.map((url) => ({ url, caption: story.title }))
@@ -329,7 +329,7 @@ function openStory(index, pool) {
 function closeStory() {
   const modal = $('#story');
   modal.classList.remove('open');
-  document.body.classList.remove('locked');
+  syncLock();
 }
 
 document.addEventListener('keydown', (e) => {

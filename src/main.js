@@ -11,7 +11,7 @@ import { mountCatalogue } from './catalogue.js';
 import { createEnvironment, applySeason, seasonAt, skyGradient, MODES } from './environment.js';
 import { attachControls, ZOOM_MIN, ZOOM_MAX } from './controls.js';
 import { createAmbient } from './ambient.js';
-import { openLightbox, bindStrip } from './lightbox.js';
+import { openLightbox, bindStrip, syncLock } from './lightbox.js';
 import { decode, sync as syncUrl, shareUrl } from './urlstate.js';
 import { CATEGORIES, MODELS, MATRIX, byId, inCategory } from './catalog.js';
 import { GALLERY, FAQ, img } from './content.js';
@@ -784,6 +784,9 @@ function galleryPool() {
 function plateFigure(url, i, cat) {
   const fig = document.createElement('figure');
   fig.className = 'plate';
+  // The strip's own index. bindStrip cannot infer it from DOM order because the
+  // conveyor interleaves video tiles and repeats the run twice.
+  fig.dataset.i = String(i);
   fig.innerHTML = `
     <span class="plate-frame">
       <img src="${img(url, 520, 390)}" alt="Chateau Sheds building" loading="lazy" decoding="async">
@@ -823,6 +826,10 @@ function renderPlates() {
       a.className = 'plate belt-video';
       a.href = href;
       a.rel = 'noopener';
+      // A walk-through must not yank the page out from under a half-built
+      // shed: tapping one used to navigate this tab to Wix and take the
+      // configured building with it.
+      a.target = '_blank';
       a.innerHTML = `<b>&#9654;</b><span>${name}</span>`;
       track.appendChild(a);
     });
@@ -884,14 +891,14 @@ function openPlates() {
   platesOverlay.querySelector('.cat-close').addEventListener('click', closePlates);
   bindStrip(grid, () => pool.map((url) => ({ url, caption: label })));
   platesOverlay.classList.add('open');
-  document.body.classList.add('locked');
+  syncLock();
   platesOverlay.querySelector('.cat-close').focus();
   platesBuilt = true;
 }
 
 function closePlates() {
   platesOverlay.classList.remove('open');
-  document.body.classList.remove('locked');
+  syncLock();
 }
 
 document.getElementById('open-plates').addEventListener('click', openPlates);
@@ -934,6 +941,7 @@ FAQ.forEach(({ q, a }) => {
 
 const form = document.getElementById('quote-form');
 const qError = document.getElementById('q-error');
+const qStatus = document.getElementById('q-status');
 
 // Where a quote lands is a deploy-time decision, not a code one. Hosted
 // publicly and pointed at the real inbox, this demo puts live enquiries in
@@ -981,6 +989,14 @@ form.addEventListener('submit', (e) => {
 
   // No backend on a sample site, so hand off to the visitor's mail client --
   // they see and send it themselves. Swap for a POST when there's an endpoint.
+  // Handing off to a mail client is invisible on a phone: the compose sheet may
+  // take a second, or be blocked outright, and until now the form said nothing
+  // either way — a tap that appears to do nothing reads as a broken button.
+  if (qStatus) {
+    qStatus.textContent = 'Opening your mail app with this build attached…';
+    qStatus.hidden = false;
+  }
+
   location.href = `mailto:${QUOTE_TO}?subject=${encodeURIComponent(
     `Quote request — ${active.tab}`
   )}&body=${encodeURIComponent(body)}`;

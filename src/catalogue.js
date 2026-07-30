@@ -1,3 +1,4 @@
+import { syncLock } from './lightbox.js';
 import * as THREE from 'three';
 import { createMatrix } from './matrix.js';
 
@@ -28,7 +29,7 @@ export function mountCatalogue(root, { models, categories, matrix, onPick }) {
         <button class="cat-close" type="button" aria-label="Close catalogue">Close</button>
       </div>
       <div class="mx3-filters" id="mx3-filters"></div>
-      <p class="mx3-hint">Scroll to travel · hover a building · click to open it</p>
+      <p class="mx3-hint">Scroll to travel · tap a building to open it</p>
     </div>`;
 
   const canvas = root.querySelector('.mx3-canvas');
@@ -130,20 +131,44 @@ export function mountCatalogue(root, { models, categories, matrix, onPick }) {
     labelEl.hidden = true;
   });
 
-  scroller.addEventListener('click', () => {
-    if (mx && mx.hovered) onPick(mx.hovered.model);
+  // Selection used to read mx.hovered, which only exists while a pointer is
+  // resting on a building. Touch has no hover: pointerleave nulls it before the
+  // compatibility click fires, so tapping a building on a phone did nothing at
+  // all — and "All models" is the only model browser there, since #hero-browse
+  // and the tab strip are both hidden. Pick from the release coordinates
+  // instead, and ignore releases that were really a scroll or a drag.
+  let downX = 0;
+  let downY = 0;
+  let downScroll = 0;
+  let downId = -1;
+  scroller.addEventListener('pointerdown', (e) => {
+    downX = e.clientX;
+    downY = e.clientY;
+    downScroll = scroller.scrollTop;
+    downId = e.pointerId;
+  });
+  scroller.addEventListener('pointerup', (e) => {
+    if (!mx || e.pointerId !== downId) return;
+    if (Math.abs(scroller.scrollTop - downScroll) > 4) return; // travelled: a scroll
+    if (Math.hypot(e.clientX - downX, e.clientY - downY) > 10) return; // a drag
+    const r = canvas.getBoundingClientRect();
+    const hit = mx.pick(
+      ((e.clientX - r.left) / r.width) * 2 - 1,
+      -((e.clientY - r.top) / r.height) * 2 + 1
+    );
+    if (hit) onPick(hit.model);
   });
 
   const close = () => {
     root.classList.remove('open');
-    document.body.classList.remove('locked');
+    syncLock();
     cancelAnimationFrame(raf);
     raf = 0;
   };
 
   const open = () => {
     root.classList.add('open');
-    document.body.classList.add('locked');
+    syncLock();
     boot();
     renderFilters();
     requestAnimationFrame(() => {
