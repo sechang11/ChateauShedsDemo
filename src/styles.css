@@ -3320,3 +3320,29 @@ body.final-overlay #s-final {
   body[data-view='inventory'] { --stage-h: 38svh; }
   body[data-view='final'] { --stage-h: 34svh; }
 }
+
+/* --- phone: last-mile corrections from the audit -------------------------- */
+@media (max-width: 860px) {
+  /* The switcher buttons went to 44px for tap targets, but --band-bottom still
+     reserved the old 2.9rem, so the foot of the info pane sat underneath them.
+     0.6rem offset + 44px button + a gap. */
+  body { --band-bottom: 4rem; }
+
+  /* The dimension labels are drawn into .dim-layer, which is positioned over
+     the canvas — it needs the same inset or the labels sit ~90px above the
+     geometry they annotate. Matches the canvas rule's specificity. */
+  body:not(.page) .stage-pane > .dim-layer {
+    top: var(--topbar-h, 5.7rem);
+    height: calc(var(--stage-h) - var(--topbar-h, 5.7rem));
+  }
+
+  /* Mounted means interactive. Mirrors the visibility pair, and ties
+     body.js #hero-copy at (1,1,1) so it wins on order. */
+  body.js #info-pane > *,
+  body.js #info-pane > * * { pointer-events: auto; }
+
+  /* An empty picker still painted a 44px slab in view 1. renderSubnav clears
+     the attribute whenever there are panes, so this only ever hides the
+     genuinely empty one. */
+  .subnav:empty { display: none; }
+}

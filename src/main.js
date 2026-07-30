@@ -1390,6 +1390,9 @@ function mountPanel() {
   mountedPanel = null;
   if (!el) return;
   if (!paneHomes.has(el)) paneHomes.set(el, { parent: el.parentNode, next: el.nextSibling });
+  // A panel that is being mounted is by definition the one on screen; never let
+  // a stale hidden attribute make the band look empty.
+  el.hidden = false;
   infoPane.appendChild(el);
   mountedPanel = el;
   // A panel should never open already scrolled from the last time it was read.
@@ -1527,12 +1530,24 @@ window.addEventListener(
     }
     if (best !== rotation) {
       rotation = best;
-      setViewAttr(best);
-      // Customizing pins the docks open regardless of where the rotation is.
-      const showDock = customizing || ROTATIONS[best].dock;
+      // Dock visibility BEFORE setViewAttr, for the same reason setRotation was
+      // reordered: renderSubnav() and currentPanelEl() are both keyed off
+      // dock.hidden, and setViewAttr calls them. Getting here first means every
+      // view change that does NOT come from tapping the switcher — scrolling,
+      // dragging the model, the idle orbit that starts on its own — rendered
+      // the previous view's decision. That is how the colour palette ended up
+      // under a picker reading "Questions | Get a quote | Built".
+      //
+      // Customizing pins the docks across views on DESKTOP, where they float
+      // beside the building. On a phone they are the band, so pinning them puts
+      // the palette in a view that is not about the palette; there the view
+      // owns its own docks.
+      const showDock = ROTATIONS[best].dock || (customizing && !narrowLayout());
       if (showDock && dock.hidden) resetDockIdle();
       dock.hidden = !showDock;
       if (dockLeft) dockLeft.hidden = !showDock;
+      setViewAttr(best);
+      renderSubnav();
       document.querySelectorAll('#rotations button').forEach((b) =>
         b.setAttribute('aria-pressed', String(b.dataset.rot === best))
       );
@@ -1583,7 +1598,20 @@ dock.addEventListener('pointerenter', () => {
 });
 
 function updateDockDrift(now) {
-  if (dock.hidden) return;
+  // Drift is a desktop affordance: a floating sheet easing out of the way of
+  // the building. In the phone info pane the dock IS the band, covers nothing,
+  // and the layout pins its opacity and transform — so the only part that
+  // survives is an inline pointer-events:none written onto a panel that still
+  // looks completely live, and an auto-exit that unmounts the palette you were
+  // editing. Neither is wanted on a phone, and no CSS can beat an inline style.
+  if (narrowLayout() || dock.hidden) {
+    for (const d of [dock, dockLeft]) {
+      if (!d) continue;
+      d.style.removeProperty('--dock-drift');
+      d.style.removeProperty('pointer-events');
+    }
+    return;
+  }
   const idle = now - lastDockInput;
   const drift = Math.min(1, Math.max(0, (idle - DOCK_IDLE_MS) / DOCK_FADE_MS));
   for (const d of [dock, dockLeft]) {
@@ -1643,7 +1671,7 @@ document.addEventListener('click', (e) => {
 // Panels that legitimately scroll their own overflow. Everything else swallows
 // the wheel: the page is driven by dragging, the nav and the idle orbit.
 const SCROLLERS =
-  ".dock, .cat-overlay, .tri-left, .tri-right, .lb, .mx3-scroll, .page-main, .copy, .triptych";
+  ".dock, .cat-overlay, .tri-left, .tri-right, .lb, .mx3-scroll, .page-main, .copy, .triptych, .info-pane";
 
 /**
  * The nearest ancestor that both matches SCROLLERS and actually has overflow.
