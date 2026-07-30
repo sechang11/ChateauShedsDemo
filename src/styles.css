@@ -2689,7 +2689,7 @@ body.final-overlay #s-final {
      (0,3,1) further up the file, which would otherwise force all of them
      visible at once — the hidden state has to win, and losing it produces
      stacked panels rather than an error. */
-  body.js #s-hero .copy,
+  body.js #hero-copy,
   body.js #s-final .triptych {
     opacity: 0;
     pointer-events: none;
@@ -2698,13 +2698,13 @@ body.final-overlay #s-final {
      them pointer-events:auto, so an inert, invisible view 3 still won the hit
      test at the band centre and its FAQ was clickable over view 1's words. */
   body.js #s-final .triptych > *,
-  body.js #s-hero .copy * { pointer-events: none; }
-  body.js[data-view='customize'] #s-hero .copy,
+  body.js #hero-copy * { pointer-events: none; }
+  body.js[data-view='customize'] #hero-copy,
   body.js[data-view='final'] #s-final .triptych {
     opacity: 1;
     pointer-events: auto;
   }
-  body.js[data-view='customize'] #s-hero .copy * { pointer-events: auto; }
+  body.js[data-view='customize'] #hero-copy * { pointer-events: auto; }
 
   /* View 3 holds TWO .copy blocks (the FAQ and the quote form). The band is the
      triptych itself; those two stay in normal flow and scroll inside it. */
@@ -2766,7 +2766,7 @@ body.final-overlay #s-final {
     bottom: 0;
   }
   body.no-3d .scroll-rail { top: 0; }
-  body.no-3d.js #s-hero .copy,
+  body.no-3d.js #hero-copy,
   body.no-3d.js #s-final .triptych {
     position: static;
     inset: auto;
@@ -2775,7 +2775,7 @@ body.final-overlay #s-final {
     opacity: 1;
     pointer-events: auto;
   }
-  body.no-3d.js #s-hero .copy *,
+  body.no-3d.js #hero-copy *,
   body.no-3d.js #s-final .triptych > * { pointer-events: auto; }
   body.no-3d .panel,
   body.no-3d .panel:not(.align-center) {
@@ -2840,7 +2840,7 @@ body.final-overlay #s-final {
   /* --- view 1: a summary card, not a page of copy ------------------------- */
   /* The card hugs its content at the foot of the band instead of stretching to
      fill it, so every pixel it does not need goes to the building. */
-  body.js[data-view='customize'] #s-hero .copy {
+  body.js[data-view='customize'] #hero-copy {
     top: auto;
     height: auto;
     max-height: calc(100svh - var(--stage-h) - var(--band-bottom) - 1rem);
@@ -2851,14 +2851,14 @@ body.final-overlay #s-final {
        .lede       95px of prose the building itself is saying
        .spec-list  six rows that are the Size dock's whole purpose
      .plate keeps the headline numbers but lies down into one row. */
-  #s-hero .copy > .eyelid,
-  #s-hero .copy > .lede,
-  #s-hero .copy > .spec-list { display: none; }
+  #hero-copy > .eyelid,
+  #hero-copy > .lede,
+  #hero-copy > .spec-list { display: none; }
 
   #s-hero h1 { margin: 0 0 0.1rem; }
-  #s-hero .copy > .tagline { margin: 0 0 0.6rem; }
+  #hero-copy > .tagline { margin: 0 0 0.6rem; }
 
-  #s-hero .copy > .plate {
+  #hero-copy > .plate {
     display: flex;
     flex-wrap: nowrap;
     gap: 0.9rem;
@@ -2869,24 +2869,24 @@ body.final-overlay #s-final {
     overflow-x: auto;
     scrollbar-width: none;
   }
-  #s-hero .copy > .plate::-webkit-scrollbar { display: none; }
-  #s-hero .copy > .plate > div {
+  #hero-copy > .plate::-webkit-scrollbar { display: none; }
+  #hero-copy > .plate > div {
     flex: 0 0 auto;
     padding: 0;
     border: 0;
   }
-  #s-hero .copy > .plate dt { font-size: 0.6rem; letter-spacing: 0.1em; }
-  #s-hero .copy > .plate dd { font-size: 0.95rem; margin: 0.1rem 0 0; }
+  #hero-copy > .plate dt { font-size: 0.6rem; letter-spacing: 0.1em; }
+  #hero-copy > .plate dd { font-size: 0.95rem; margin: 0.1rem 0 0; }
 
   /* One primary action. The other two are the topbar's "All models" and the
      bottom switcher's "Quote & FAQ" — repeating them here cost 115px. */
-  #s-hero .copy > .actions {
+  #hero-copy > .actions {
     display: block;
     margin: 0 0 0.55rem;
   }
-  #s-hero .copy > .actions > #hero-browse,
-  #s-hero .copy > .actions > [data-goto='s-final'] { display: none; }
-  #s-hero .copy > .actions > .cta {
+  #hero-copy > .actions > #hero-browse,
+  #hero-copy > .actions > [data-goto='s-final'] { display: none; }
+  #hero-copy > .actions > .cta {
     display: block;
     width: 100%;
     text-align: center;
@@ -2963,10 +2963,10 @@ body.final-overlay #s-final {
 /* 258px of card content was 177px of type and 81px of gaps. The gaps were
    authored for a full-height copy column, not a 200px card. */
 @media (max-width: 860px) {
-  body.js[data-view='customize'] #s-hero .copy { padding: 0.75rem 1rem 0.8rem; }
-  #s-hero .copy > .tagline { margin: 0 0 0.45rem; }
-  #s-hero .copy > .plate { margin: 0 0 0.6rem; padding-top: 0.45rem; }
-  #s-hero .copy > .actions { margin: 0 0 0.4rem; }
+  body.js[data-view='customize'] #hero-copy { padding: 0.75rem 1rem 0.8rem; }
+  #hero-copy > .tagline { margin: 0 0 0.45rem; }
+  #hero-copy > .plate { margin: 0 0 0.6rem; padding-top: 0.45rem; }
+  #hero-copy > .actions { margin: 0 0 0.4rem; }
 }
 
 /* --- short phones --------------------------------------------------------- */
@@ -2974,11 +2974,11 @@ body.final-overlay #s-final {
    thing that can go: footprint and roofline are both in the Size dock, and the
    building on screen is already showing its shape. */
 @media (max-width: 860px) and (max-height: 700px) {
-  #s-hero .copy > .plate { display: none; }
+  #hero-copy > .plate { display: none; }
   /* Even without the plate a 640px screen left the card 5px short of its own
      content. Take it out of the padding rather than the type. */
-  body.js[data-view='customize'] #s-hero .copy { padding: 0.6rem 1rem 0.65rem; }
-  #s-hero .copy > .actions { margin: 0 0 0.3rem; }
+  body.js[data-view='customize'] #hero-copy { padding: 0.6rem 1rem 0.65rem; }
+  #hero-copy > .actions { margin: 0 0 0.3rem; }
 }
 
 /* --- landscape phones: re-assert the split ratios -------------------------- */
@@ -2994,8 +2994,8 @@ body.final-overlay #s-final {
   body[data-view='inventory'] { --stage-h: 30svh; }
   body[data-view='final'] { --stage-h: 26svh; }
 
-  #s-hero .copy > .tagline,
-  #s-hero .copy > .fine { display: none; }
+  #hero-copy > .tagline,
+  #hero-copy > .fine { display: none; }
   #s-hero h1 { margin: 0 0 0.4rem; }
 }
 
@@ -3098,7 +3098,7 @@ body.final-overlay #s-final {
   /* Customizing pins the docks open over view 1 as well, where they would land
      on top of the summary card in the same band. The docks are what you came
      for at that point, so the card stands down. */
-  body.customizing #s-hero .copy { display: none; }
+  body.customizing #hero-copy { display: none; }
 
   /* --- view 3: questions OR quote OR built, full band --------------------- */
   body.js #s-final .triptych { top: var(--pane-top); }
@@ -3262,4 +3262,61 @@ body.final-overlay #s-final {
   .subnav button:not([aria-pressed='true']):active {
     background: rgba(22, 24, 28, 0.08);
   }
+}
+
+/* --- phone: give the model the space it actually has ---------------------- */
+/* The topbar is fixed and sits over the top of the stage band, so the canvas
+   was ~90px taller than the part of it you can see, and the camera centred the
+   building in the whole box — putting it about 45px above the middle of the
+   visible area. That is why the model read as small and sitting high.
+   The grid still runs to the top, because the topbar is translucent and the
+   grid behind it is the intended look; only the canvas is inset. --topbar-h is
+   published by measureTopbar() in main.js, so it follows the real bar. */
+@media (max-width: 860px) {
+  /* body:not(.page) #stage from the standalone-pages fix is (1,1,1) and pins
+     top:0 / height:var(--stage-h) on the canvas — it was already overriding the
+     container rule, which is why the canvas filled the band rather than its
+     pane. Match its shape to outrank it at (1,2,1). */
+  body:not(.page) .stage-pane > #stage {
+    top: var(--topbar-h, 5.7rem);
+    height: calc(var(--stage-h) - var(--topbar-h, 5.7rem));
+  }
+
+  /* The bottom switcher is the primary navigation on a phone and its buttons
+     were 28px tall. */
+  .rotations button {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+  .viewbar-toggle {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.85rem;
+  }
+
+  /* A panel that is not the mounted one is invisible but was still in the tab
+     order — the hero's Customize button stayed focusable behind views 2 and 3.
+     visibility also removes it from the accessibility tree, and it is
+     overridden back for whichever panel is in the info pane. */
+  body.js #hero-copy { visibility: hidden; }
+  /* body.js, not bare body: this has to tie the rule above at (1,1,1) and win
+     on order, or the panel it un-hides is the one that is actually on screen. */
+  body.js #info-pane > * { visibility: visible; }
+}
+
+/* --- landscape phones: the topbar cannot have a fifth of the screen -------- */
+/* Insetting the canvas below the topbar is right in portrait and ruinous in
+   landscape: 90px of nav out of a 400px-tall screen left 70px of model in view
+   1 and 14px in view 3. The second topbar row is the model tab strip, and "All
+   models" in the first row opens the same catalogue, so the strip is the thing
+   that goes. That takes the bar to roughly 48px — measureTopbar() republishes
+   --topbar-h on resize, so the canvas inset follows without another constant —
+   and the bands can then afford a bit more height. */
+@media (max-width: 860px) and (max-height: 520px) {
+  .topbar .tabs { display: none; }
+
+  body[data-view='customize'] { --stage-h: 48svh; }
+  body[data-view='inventory'] { --stage-h: 38svh; }
+  body[data-view='final'] { --stage-h: 34svh; }
 }

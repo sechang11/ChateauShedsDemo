@@ -989,7 +989,21 @@ form.addEventListener('submit', (e) => {
 /* ----------------------------------------------------------------- scroll */
 
 let anchors = [];
+
+// The topbar is fixed and overlays the top of the stage band, so the canvas was
+// taller than the part of it you can actually see and the building sat centred
+// in a box whose top 90px was behind the nav. Publish the real height so the
+// phone layout can inset the canvas to the visible area instead of guessing —
+// the bar grows and shrinks with the category and model names.
+function measureTopbar() {
+  const bar = document.querySelector('.topbar');
+  if (!bar) return;
+  const h = Math.round(bar.getBoundingClientRect().height);
+  if (h) document.documentElement.style.setProperty('--topbar-h', `${h}px`);
+}
+
 function measure() {
+  measureTopbar();
   anchors = sections.map((el) => el.offsetTop);
   const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
   if (anchors.length) anchors[anchors.length - 1] = Math.max(anchors[anchors.length - 1], maxScroll);
@@ -1348,7 +1362,10 @@ function currentPanelEl() {
       pane === 'quote' ? '.tri-right' : pane === 'built' ? '.tri-strip' : '.tri-left'
     );
   }
-  return document.querySelector('#s-hero .copy');
+  // By id, not '#s-hero .copy': once this panel is mounted in the info pane
+  // it is no longer a descendant of #s-hero and that selector returns null,
+  // which silently unmounted view 1 on every later call.
+  return document.getElementById('hero-copy');
 }
 
 const paneHomes = new Map();
@@ -1379,8 +1396,15 @@ function mountPanel() {
   infoPane.scrollTop = 0;
 }
 
-// Crossing the breakpoint has to put things back or take them over.
+// Crossing the breakpoint has to put things back or take them over. Two
+// triggers rather than one: resize covers rotation and window dragging, and the
+// media query fires even when a resize event does not — if either is missed the
+// panel is stranded in a container the other layout hides, which shows as a
+// completely blank column.
 window.addEventListener('resize', mountPanel);
+const narrowQuery = window.matchMedia('(max-width: 860px)');
+if (narrowQuery.addEventListener) narrowQuery.addEventListener('change', mountPanel);
+else if (narrowQuery.addListener) narrowQuery.addListener(mountPanel);
 
 function setPane(id) {
   document.body.dataset.pane = id;

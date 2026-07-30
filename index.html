@@ -90,7 +90,9 @@
     <main>
       <!-- VIEW 1 — the building. Three ways out. -->
       <section id="s-hero" class="panel align-left">
-        <div class="copy">
+        <!-- id, not just a class: main.js moves this panel into #info-pane on a
+             phone, at which point any "#s-hero .copy" selector stops matching it. -->
+        <div class="copy" id="hero-copy">
           <p class="eyelid"><span data-bind="categoryLabel">Sheds</span></p>
           <h1><span data-bind="tab">The Chateau</span></h1>
           <p class="tagline" data-bind="tagline">The flagship</p>
