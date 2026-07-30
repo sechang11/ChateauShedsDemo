@@ -3391,3 +3391,20 @@ body.final-overlay #s-final {
   .quote .actions { order: 7; }
   .quote > .fine { order: 8; }
 }
+
+/* --- desktop: view 2 owns the screen while it is active ------------------- */
+/* The palette is a working surface. While it is up, the hero's pitch and the
+   quote form behind it are noise — and only half of that was suppressed: the
+   triptych had a body.customizing rule, the hero copy did not, so on a desktop
+   view 1's words sat next to the palette the whole time it was open. (Phones
+   never had this: the info pane shows one panel by construction.)
+   The id gives (1,1,1), which outranks body.js .panel.in .copy at (0,3,1) —
+   the rule that would otherwise keep the hero visible for the session, since
+   .in is only ever added. .copy already carries the 0.7s opacity transition,
+   so this fades rather than cuts, matching how the triptych behaves. */
+@media (min-width: 861px) {
+  body.customizing #hero-copy {
+    opacity: 0;
+    pointer-events: none;
+  }
+}

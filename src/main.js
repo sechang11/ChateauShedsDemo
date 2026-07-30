@@ -1637,9 +1637,15 @@ function updateDockDrift(now) {
     // walls down both sides of the building.
     d.style.pointerEvents = drift > 0.95 ? 'none' : 'auto';
   }
-  // Fully drifted while customizing: the palette is done with, so view 3
-  // arrives where the building already is.
-  if (drift >= 1 && customizing) exitCustomizing(true);
+  // Fully drifted while customizing: the palette is done with, so whichever
+  // view the building is actually turned to comes back in.
+  //
+  // This used to pass a hard `true`, which pinned view 3 no matter where the
+  // shed had been rotated to — you could time out while looking at the hero
+  // and be handed the quote form. `rotation` is already the answer to "which
+  // view is the building at", kept current by the scroll listener, so the
+  // overlay is only pinned when that is genuinely where we are.
+  if (drift >= 1 && customizing) exitCustomizing(rotation === 'final');
 }
 
 // Entering a rotation deliberately counts as attention, so the dock arrives
