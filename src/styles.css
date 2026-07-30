@@ -3365,3 +3365,29 @@ body.final-overlay #s-final {
   margin: 0.4rem 0 0;
   color: var(--ink-2);
 }
+
+/* --- phone: the quote pane opens on the form, not on a spec sheet --------- */
+/* Measured at 390x844: the pane is 351px tall and #q-build — the summary of
+   what you are about to send — is 200px of it, so the first input sat at
+   offset 350. Opening "Get a quote" showed a heading, a wall of specs, and no
+   form whatsoever, which reads as broken rather than as scrollable.
+   The summary is still worth showing; it just is not what you came for. Fields
+   first, summary underneath, in smaller type. */
+@media (max-width: 860px) {
+  .quote {
+    display: flex;
+    flex-direction: column;
+  }
+  #q-build {
+    order: 9;
+    margin: 1rem 0 0;
+    padding-top: 0.7rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.78rem;
+  }
+  /* Keep the send button directly under the fields it submits. */
+  .quote .q-error { order: 5; }
+  .quote .q-status { order: 6; }
+  .quote .actions { order: 7; }
+  .quote > .fine { order: 8; }
+}

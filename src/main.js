@@ -1096,7 +1096,7 @@ function frame(now) {
     // Outside and inside are two camera rigs blended by interiorMix, so
     // stepping in is a move through the wall rather than a cut.
     // Zoom divides: a bigger zoom pulls the camera in, not out.
-    const outDist = (current.dist * f * (narrow ? 1.16 : 1)) / zoom;
+    const outDist = (current.dist * f * (narrow ? 1.45 : 1)) / zoom;
     lastCamDist = outDist; // ambient scales its flight radius off this
     const inDist = Math.max(2.6, Math.min(working.width, working.depth) * 0.3);
     // The narrow-screen raise existed to lift the building clear of a copy card

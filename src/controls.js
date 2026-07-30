@@ -38,8 +38,12 @@ const MIN_DRAG_WIDTH = 320;
 // gesture can use the whole width, and it cannot: a mouse drag runs as far as
 // you like, a thumb swipe stops around 250px whatever the screen is. Without
 // this a phone swipe covered ~110 degrees of a 240 degree run, so a lap took
-// several. With it one swipe is most of a lap.
-const TOUCH_GAIN = 2;
+// several. At 3 a 250px swipe is ~337 degrees of demand against a 240 degree
+// run, i.e. one swipe walks the building from end to end with room to spare.
+// Note the run IS 240 degrees, not 360: azimuth is bound to scroll position
+// and spinBy clamps at both ends, so past the clamp further swiping does
+// nothing by design.
+const TOUCH_GAIN = 3;
 // A 260px drag used to slam straight into the clamp; this spans about half the
 // range over a comfortable pull.
 const ZOOM_PER_PX = 0.0018;
