@@ -1296,7 +1296,75 @@ const setViewAttr = (id) => {
   // Collapse the scene toggles again on a view change; leaving them open over
   // the next view is just clutter the user did not ask for.
   closeViewbar();
+  renderSubnav();
 };
+
+/* --------------------------------------------------- one panel at a time */
+
+// Views 2 and 3 are several panels each. On desktop they sit side by side and
+// read as one composition; stacked into a phone band they just crowd each
+// other, and two half-height dock sheets are worse than one full-height one.
+// So on a phone each view shows a single panel and this picks which.
+//
+// The CSS does the hiding, keyed off body[data-pane]. Nothing here runs on
+// desktop beyond writing an attribute no desktop rule reads.
+const PANES = {
+  customize: [],
+  inventory: [
+    { id: 'size', label: 'Dimensions' },
+    { id: 'colour', label: 'Colour' },
+  ],
+  final: [
+    { id: 'faq', label: 'Questions' },
+    { id: 'quote', label: 'Get a quote' },
+    { id: 'built', label: 'Built' },
+  ],
+};
+
+const subnav = document.getElementById('subnav');
+
+function setPane(id) {
+  document.body.dataset.pane = id;
+  if (!subnav) return;
+  subnav.querySelectorAll('button').forEach((b) =>
+    b.setAttribute('aria-pressed', String(b.dataset.pane === id))
+  );
+}
+
+/** Rebuild the picker for the current view, defaulting to its first panel. */
+function renderSubnav() {
+  if (!subnav) return;
+  const panes = PANES[rotation] || [];
+  subnav.hidden = panes.length === 0;
+  subnav.innerHTML = '';
+  if (!panes.length) {
+    delete document.body.dataset.pane;
+    return;
+  }
+  for (const p of panes) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.pane = p.id;
+    b.textContent = p.label;
+    subnav.appendChild(b);
+  }
+  // Keep the current panel if this view still offers it, so returning to a
+  // view does not silently throw away what you were looking at.
+  const keep = panes.some((p) => p.id === document.body.dataset.pane);
+  setPane(keep ? document.body.dataset.pane : panes[0].id);
+}
+
+if (subnav) {
+  subnav.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-pane]');
+    if (!b) return;
+    setPane(b.dataset.pane);
+    // Picking a panel is attention: the idle orbit must not turn the page out
+    // from under someone who just chose what to look at.
+    noteInput();
+    resetDockIdle();
+  });
+}
 
 // The scene toggles are a disclosure on narrow screens (see the button in
 // index.html). Defined before setViewAttr runs at init.

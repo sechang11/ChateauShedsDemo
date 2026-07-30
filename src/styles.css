@@ -2998,3 +2998,119 @@ body.final-overlay #s-final {
   #s-hero .copy > .fine { display: none; }
   #s-hero h1 { margin: 0 0 0.4rem; }
 }
+
+/* ===========================================================================
+   NARROW SCREENS: ONE PANEL AT A TIME
+
+   Views 2 and 3 are compositions of several panels. Side by side on a desktop
+   they read as one thing; stacked into a phone band they crowd each other, and
+   two half-height dock sheets are strictly worse than one full-height sheet —
+   dimensions and colour were each getting 173px to work in.
+
+   So on a phone each view shows a single panel, picked by #subnav, and the
+   panel gets the whole band. That also pays for the model: with nothing to
+   stack, the bands can be shorter and the canvas extends further down.
+
+   --band-bottom drops from 5.4rem to 2.9rem here too. It was reserving room
+   for the viewbar AND the switcher, but the viewbar is behind a disclosure
+   now, so 40px of that reservation was holding nothing.
+   =========================================================================== */
+@media (max-width: 860px) {
+  :root {
+    --band-bottom: 2.9rem;
+    --subnav-h: 2rem;
+    --pane-top: calc(var(--band-top) + var(--subnav-h) + 0.35rem);
+  }
+
+  /* Reclaimed space goes to the building. */
+  body[data-view='customize'] { --stage-h: 60svh; }
+  body[data-view='inventory'] { --stage-h: 48svh; }
+  body[data-view='final'] { --stage-h: 44svh; }
+
+  /* The per-view override above lands on BODY, but --band-top and --sheet were
+     declared on :root, and a var() inside a :root declaration resolves against
+     :root's own --stage-h — it never sees the override. The canvas moved with
+     the view while every band stayed put at one ratio. Re-derive them here, on
+     the same element the override lands on. */
+  body {
+    --band-top: calc(var(--stage-h) + var(--band-gap));
+    --pane-top: calc(var(--band-top) + var(--subnav-h) + 0.35rem);
+    --sheet: calc(
+      (100svh - var(--band-top) - var(--band-bottom) - var(--band-gap)) / 2
+    );
+  }
+
+  /* --- the picker --------------------------------------------------------- */
+  .subnav {
+    position: fixed;
+    left: var(--pad);
+    right: var(--pad);
+    top: var(--band-top);
+    z-index: 24;
+    display: flex;
+    gap: 1px;
+    height: var(--subnav-h);
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .subnav[hidden] { display: none; }
+  .subnav button {
+    flex: 1 1 0;
+    min-width: 0;
+    font: inherit;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    background: rgba(255, 255, 255, 0.94);
+    border: 0;
+    padding: 0 0.3rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .subnav button[aria-pressed='true'] {
+    color: var(--paper);
+    background: var(--ink);
+  }
+
+  /* --- view 2: dimensions OR colour, full band ---------------------------- */
+  .dock-l,
+  .dock-r {
+    top: var(--pane-top);
+    bottom: var(--band-bottom);
+    max-height: none;
+    left: var(--pad);
+    right: var(--pad);
+  }
+  body[data-pane='colour'] .dock-l,
+  body[data-pane='size'] .dock-r { display: none; }
+
+  /* --- view 3: questions OR quote OR built, full band --------------------- */
+  body.js #s-final .triptych { top: var(--pane-top); }
+  body[data-view='final'] .tri-left,
+  body[data-view='final'] .tri-right,
+  body[data-view='final'] .tri-strip { display: none; }
+  body[data-view='final'][data-pane='faq'] .tri-left,
+  body[data-view='final'][data-pane='quote'] .tri-right,
+  body[data-view='final'][data-pane='built'] .tri-strip { display: block; }
+}
+
+@media (min-width: 861px) {
+  /* Desktop shows the whole composition; the picker would be meaningless. */
+  .subnav { display: none; }
+}
+
+/* --- landscape phones: final word on the ratios ---------------------------- */
+/* Third time this has needed restating, and the reason is always the same: the
+   per-view rules are body[data-view=...] (0,1,1), so any later block declaring
+   them wins and landscape silently inherits portrait's ratios. On a 400px-tall
+   screen portrait's 60% model leaves the card ~90px for ~120px of content.
+   This block must stay LAST of the ratio declarations. */
+@media (max-width: 860px) and (max-height: 520px) {
+  body[data-view='customize'] { --stage-h: 40svh; }
+  body[data-view='inventory'] { --stage-h: 30svh; }
+  body[data-view='final'] { --stage-h: 26svh; }
+}

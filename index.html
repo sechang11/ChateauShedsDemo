@@ -30,6 +30,11 @@
       <button type="button" data-rot="final" aria-pressed="false">Quote &amp; FAQ</button>
     </nav>
 
+    <!-- Phone only. Views 2 and 3 each hold several panels that were stacked
+         into one band; on a phone they show one at a time and this picks which.
+         Populated by main.js from the current view, empty on desktop. -->
+    <nav class="subnav" id="subnav" aria-label="Panel"></nav>
+
     <header class="topbar">
       <div class="bar-main">
         <a class="wordmark" href="#s-hero">
