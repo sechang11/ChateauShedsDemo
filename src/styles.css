@@ -3085,17 +3085,39 @@ body.final-overlay #s-final {
     left: var(--pad);
     right: var(--pad);
   }
-  body[data-pane='colour'] .dock-l,
-  body[data-pane='size'] .dock-r { display: none; }
+  /* Exactly one dock, in every state — written as a default plus one override
+     rather than a pair of matches. Both docks were showing whenever data-pane
+     was not a dock pane, and that is not an edge case: customizing mode pins
+     them open in EVERY view (showDock = customizing || ...), so touching one
+     slider and scrolling away left the pane attribute reading 'faq', or
+     nothing at all, and neither hide rule matched. Dimensions is the default;
+     only 'colour' swaps it. */
+  body:not([data-pane='colour']) .dock-r { display: none; }
+  body[data-pane='colour'] .dock-l { display: none; }
+
+  /* Customizing pins the docks open over view 1 as well, where they would land
+     on top of the summary card in the same band. The docks are what you came
+     for at that point, so the card stands down. */
+  body.customizing #s-hero .copy { display: none; }
 
   /* --- view 3: questions OR quote OR built, full band --------------------- */
   body.js #s-final .triptych { top: var(--pane-top); }
-  body[data-view='final'] .tri-left,
+  /* Same shape as the docks: a default plus overrides, so no combination of
+     attributes can leave the band showing everything or nothing. Questions is
+     the default; quote and built each swap it out. */
   body[data-view='final'] .tri-right,
   body[data-view='final'] .tri-strip { display: none; }
-  body[data-view='final'][data-pane='faq'] .tri-left,
   body[data-view='final'][data-pane='quote'] .tri-right,
   body[data-view='final'][data-pane='built'] .tri-strip { display: block; }
+  body[data-view='final'][data-pane='quote'] .tri-left,
+  body[data-view='final'][data-pane='built'] .tri-left { display: none; }
+  /* .tri-left and .tri-right are .copy elements, so their opacity still came
+     from body.js .panel.in .copy — the add-only class this layout deliberately
+     stopped switching on. Questions and Get a quote therefore rendered an empty
+     band until the observer happened to fire. Tie its specificity (0,3,1) and
+     win on order instead, so the pane is visible because it is the pane. */
+  body.js[data-view='final'] .tri-left,
+  body.js[data-view='final'] .tri-right { opacity: 1; }
 }
 
 @media (min-width: 861px) {

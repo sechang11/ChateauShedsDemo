@@ -22,10 +22,18 @@
 export const ZOOM_MIN = 0.5;
 export const ZOOM_MAX = 2.0;
 
-// Tuned so a full lap of the building takes a few comfortable drags rather
-// than one flick — the page scrolls with it, and a flick threw you two-thirds
-// of the way down the document.
-const DEG_PER_PX = 0.13;
+// How far the building turns when you drag the full width of the canvas.
+//
+// This used to be a flat 0.13 deg/px, which quietly meant the gesture was a
+// different gesture on every device: 0.13 x 1440px of desktop canvas is 187
+// degrees — nearly a half turn per drag — while 0.13 x 400px of phone is 52,
+// so a 240 degree run took about 1850px of swiping, in ~250px bites. Deriving
+// it from the canvas width instead keeps the feel constant: one drag across
+// the model is half a turn, wherever you are. At 1440px this lands on 0.125,
+// so desktop is unchanged; on a 400px phone it is 0.45.
+const DEG_PER_FULL_DRAG = 180;
+// Below this the ratio starts to feel twitchy rather than responsive.
+const MIN_DRAG_WIDTH = 320;
 // A 260px drag used to slam straight into the clamp; this spans about half the
 // range over a comfortable pull.
 const ZOOM_PER_PX = 0.0018;
@@ -77,8 +85,11 @@ export function attachControls(target, { onSpin, onZoom, onActive }) {
       return;
     }
 
-    // Drag right → building turns toward you, so negate.
-    onSpin(-dx * DEG_PER_PX);
+    // Drag right → building turns toward you, so negate. Read the width per
+    // move rather than caching it: the canvas is a band on phones whose height
+    // and width both change with the view and on rotation.
+    const degPerPx = DEG_PER_FULL_DRAG / Math.max(MIN_DRAG_WIDTH, target.clientWidth);
+    onSpin(-dx * degPerPx);
   });
 
   const end = (e) => {

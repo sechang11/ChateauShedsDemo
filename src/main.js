@@ -1331,10 +1331,14 @@ function setPane(id) {
   );
 }
 
-/** Rebuild the picker for the current view, defaulting to its first panel. */
+/** Rebuild the picker for whatever the band is currently showing. */
 function renderSubnav() {
   if (!subnav) return;
-  const panes = PANES[rotation] || [];
+  // Keyed off what is on screen, not off the view. Customizing mode pins the
+  // docks open in every view, and when it does they are what the band holds —
+  // so they own the picker, or there would be no way to get from dimensions to
+  // colour without scrolling back to view 2.
+  const panes = dock && !dock.hidden ? PANES.inventory : PANES[rotation] || [];
   subnav.hidden = panes.length === 0;
   subnav.innerHTML = '';
   if (!panes.length) {
@@ -1377,10 +1381,16 @@ function closeViewbar() {
 function setRotation(id) {
   resetDockIdle();
   rotation = ROTATIONS[id] ? id : 'customize';
-  setViewAttr(rotation);
   const cfg = ROTATIONS[rotation];
+  // Dock visibility has to be settled BEFORE setViewAttr: the picker it
+  // rebuilds is keyed off which docks are on screen, and this ran the other way
+  // round, so the picker was always one call behind.
   dock.hidden = !cfg.dock;
   if (dockLeft) dockLeft.hidden = !cfg.dock;
+  setViewAttr(rotation);
+  // setViewAttr early-returns when the view has not changed, and the dock state
+  // may still have; re-render unconditionally.
+  renderSubnav();
   document.querySelectorAll('#rotations button').forEach((b) =>
     b.setAttribute('aria-pressed', String(b.dataset.rot === rotation))
   );
@@ -1635,6 +1645,9 @@ function enterCustomizing() {
   document.body.classList.remove('final-overlay');
   // Always push the idle clock out: every further tweak buys more time.
   resetDockIdle();
+  // Entering and leaving customizing changes which docks are on screen without
+  // changing the view, and the picker is keyed off what is on screen.
+  renderSubnav();
   return already;
 }
 
@@ -1645,6 +1658,7 @@ function exitCustomizing(showFinal) {
   document.body.classList.toggle('final-overlay', !!showFinal);
   dock.hidden = true;
   if (dockLeft) dockLeft.hidden = true;
+  renderSubnav();
 }
 
 // Value changes only. `input` and `change` fire on the sliders and fields;
